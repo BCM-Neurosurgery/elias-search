@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  client:
+    build:
+      context: ./elias-search-client
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./
+  server:
+  streamlit:
+
+
