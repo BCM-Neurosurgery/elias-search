@@ -5,8 +5,9 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useNavigate
 } from "react-router";
-
+import { useEffect } from "react";
 import type { Route } from "./+types/root";
 import "./app.css";
 
@@ -42,6 +43,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const isAuthenticated = document.cookie.includes("auth=true");
+    navigate(isAuthenticated ? "/dashboard" : "/login", { replace: true });
+  }, []);
+
   return <Outlet />;
 }
 

@@ -4,11 +4,48 @@ services:
   client:
     build:
       context: ./elias-search-client
+      dockerfile: Dockerfile.dev
     ports:
       - "3000:3000"
     volumes:
-      - ./
+      - ./elias-search-client:/app
+      - /app/node_modules # prevent host module overrides
+    environment:
+      - VITE_BACKEND_URL=http://elias.bcms.bcm.edu/api
+    depends_on:
+      - server
+      - streamlit
+
   server:
+    build: 
+      context: ./elias-search-server
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./elias-search-server:/app
+
   streamlit:
+    build:
+      context: ./streamlit_app
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./streamlit_app:/app
+    environment:
+      - STREAMLIT_BACKEND_URL=http://server:8080
+    depends_on:
+      - server
+    
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - client
+      - server
+      - streamlit
+  
 
 
