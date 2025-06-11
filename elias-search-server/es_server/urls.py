@@ -16,7 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from .views import ssh_auth, auth_status
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('auth/login/', ssh_auth),
+    path('auth/status/', auth_status)
 ]

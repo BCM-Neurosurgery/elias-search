@@ -124,3 +124,18 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# session config
+SESSION_COOKIE_NAME = "bcm_auth"
+SESSION_COOKIE_AGE = 3600 * 6 # 6 hours
+SESSION_COOKIE_SECURE = False  # set to True in prod when using HTTPS
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+
+# TODO: add username cookie
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://elias.bcms.bcm.edu",  # adjust as needed
+]
