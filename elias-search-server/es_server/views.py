@@ -1,9 +1,7 @@
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from django.contrib.sessions.models import SessionMiddleware
 from paramiko import SSHClient, AutoAddPolicy
 import json
-import JsonResponse
 
 @csrf_exempt
 def ssh_auth(request):
@@ -18,7 +16,7 @@ def ssh_auth(request):
     ssh.set_missing_host_key_policy(AutoAddPolicy())
 
     try:
-        ssh.connect('localhost', username=username, password=password)
+        ssh.connect('elias.bcms.bcm.edu', username=username, password=password)
         ssh.close()
         request.session['ssh_authenticated'] = True
         request.session['username'] = username

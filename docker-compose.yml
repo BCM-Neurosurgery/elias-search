@@ -14,8 +14,6 @@ services:
       - VITE_BACKEND_URL=http://elias.bcms.bcm.edu/api
     depends_on:
       - server
-      - streamlit
-
   server:
     build: 
       context: ./elias-search-server
@@ -23,19 +21,9 @@ services:
       - "8080:8080"
     volumes:
       - ./elias-search-server:/app
-
-  streamlit:
-    build:
-      context: ./streamlit_app
-    ports:
-      - "8501:8501"
-    volumes:
-      - ./streamlit_app:/app
-    environment:
-      - STREAMLIT_BACKEND_URL=http://server:8080
-    depends_on:
-      - server
-    
+    command: >
+      sh -c "python manage.py migrate &&
+        python manage.py runserver 0.0.0.0:8080"
   nginx:
     image: nginx:alpine
     ports:
@@ -45,7 +33,6 @@ services:
     depends_on:
       - client
       - server
-      - streamlit
   
 
 
