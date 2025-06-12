@@ -26,3 +26,6 @@ def ssh_auth(request):
 
 def auth_status(request):
     return JsonResponse({"authenticated": request.session.get("ssh_authenticated", False)})
+
+def query_db(request):
+    pass
