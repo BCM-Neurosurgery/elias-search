@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router"
+import QueryForm from "../components/QueryForm/QueryForm";
 
 export default function Dashboard() {
     // set hooks
@@ -9,7 +10,7 @@ export default function Dashboard() {
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                const response = await fetch("http://elias.bcms.bcm.edu/api/auth/status/", {
+                const response = await fetch("/api/auth/status/", {
                     credentials: "include",
                 });
                 const data = await response.json();
@@ -33,7 +34,8 @@ export default function Dashboard() {
     
     return (
         <div className="h-screen">
-            <h1 className="text-x1 p-4">Streamlit Dashboard</h1>
+            <h1 className="text-x1 p-4">Dashboard</h1>
+            <QueryForm/>
         </div>
     )
 }

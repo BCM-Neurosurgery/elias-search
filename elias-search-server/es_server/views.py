@@ -28,4 +28,16 @@ def auth_status(request):
     return JsonResponse({"authenticated": request.session.get("ssh_authenticated", False)})
 
 def query_db(request):
-    pass
+    return(JsonResponse(request.body))
+
+def get_patients(request):
+    patient_list = [
+        "YEX",
+        "YEY",
+        "YFA",
+        "YFF",
+        "YFK",
+        "YFM",
+        "YFP"
+    ]
+    return JsonResponse({'patients': patient_list})
