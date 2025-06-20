@@ -99,4 +99,14 @@ def weektime_query(data, query):
     return time_filtered_query
 
 def patient_query(data, query):
-    pass
+    from emu24.schema import NSPChunks, Patient
+    patient_filtered_query = NSPChunks() & '0=1'
+
+    # get patient id and filter nsp rows
+    for patient in data["selectedPatients"]:
+        # get patient id and qu
+        pt_id = (Patient () & f"emu_id = '{patient}'").fetch1('patient_id')
+        subquery = query & f"patient_id = '{pt_id}'"
+        patient_filtered_query = patient_filtered_query + subquery
+
+    return patient_filtered_query
