@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router"
 import QueryForm from "../components/QueryForm/QueryForm";
+import QueryResponse from '../components/QueryResponse';
 
 export default function Dashboard() {
     // set hooks
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
+    const [queryResult, setQueryResult] = useState<any | null>(null);
+    const [queryPayload, setQueryPayload] = useState<any | null>(null);
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -33,9 +36,19 @@ export default function Dashboard() {
     }
     
     return (
-        <div className="h-screen">
-            <h1 className="text-x1 p-4">Dashboard</h1>
-            <QueryForm/>
+        <div className="p-6 space-y-6">
+            <QueryForm
+                onResult={(data) => {
+                    setQueryPayload(data.query);
+                    setQueryResult(data.result);
+                }}
+            />
+            {queryResult && (
+                <QueryResponse
+                    result={queryResult}
+                    payload={queryPayload} 
+                />
+            )}
         </div>
     )
 }

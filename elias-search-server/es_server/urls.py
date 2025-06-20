@@ -22,6 +22,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/login/', ssh_auth),
     path('auth/status/', auth_status),
-    path('query/', query_db),
+    path('query/db', query_db),
     path('query/patients', get_patients)
 ]

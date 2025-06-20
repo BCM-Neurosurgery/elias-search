@@ -1,2 +1,4 @@
 django
 paramiko
+datajoint
+emu24 @ git+ssh://git@github.com/BCM-Neurosurgery/EMU24Schema.git@main

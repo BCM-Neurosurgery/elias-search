@@ -19,8 +19,15 @@ services:
       context: ./elias-search-server
     ports:
       - "8080:8080"
+    environment:
+      - DJ_USER: ${DJ_USER}
+      - D_PASSWORD: ${DJ_PASSWORD}
+      - ENVIRONMENT: ${ENVIRONMENT}
     volumes:
       - ./elias-search-server:/app
+      - ${DATALAKE_PATH}:/mnt/data/datalake/emu
+      - ${STITCHED_PATH}:/mnt/stitched/EMU-18112
+      - ./elias-search-server/dj_log.log:/mnt/lake-database/stitched-logs/datajoint_computed_table.log
     command: >
       sh -c "python manage.py migrate &&
         python manage.py runserver 0.0.0.0:8080"

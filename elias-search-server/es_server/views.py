@@ -27,8 +27,12 @@ def ssh_auth(request):
 def auth_status(request):
     return JsonResponse({"authenticated": request.session.get("ssh_authenticated", False)})
 
+@csrf_exempt
 def query_db(request):
-    return(JsonResponse(request.body))
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid request method'}, status=405)
+    data = json.loads(request.body)
+    return(JsonResponse(data))
 
 def get_patients(request):
     patient_list = [

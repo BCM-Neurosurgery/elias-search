@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import TaskSelector from "./TaskSelector";
 import PatientSelector from "./PatientSelector";
-import BrainRegionSelector from "./DateTimeRangeSelector";
+// import BrainRegionSelector from "./DateTimeRangeSelector";
 import DateTimeRangeSelector from "./DateTimeRangeSelector";
 import DaysOfStaySelector from "./DaysOfStaySelector";
 import TimeOfWeekSelector from "./TimeOfWeekSelector";
@@ -11,14 +11,18 @@ type TimeSlot = {
     hour: number; // 0 - 23
 }
 
-export default function QueryForm() {
+interface QueryFormProps {
+    onResult: (data: { result: any; query: any }) => void;
+}
+
+export default function QueryForm({ onResult } : QueryFormProps) {
     // set hooks
     const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
     const [allTasks, setAllTasks] = useState<boolean>(true);
     const [excludeStim, setExcludeStim] = useState<boolean>(true);
     const [patients, setPatients] = useState<string[]>([]);
     const [selectedPatients, setSelectedPatients] = useState<string[]>([]);
-    const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
+    // const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
     const [fromDateTime, setFromDateTime] = useState<string | null>(null);
     const [toDateTime, setToDateTime] = useState<string | null>(null);
     const [selectedDaysOfStay, setSelectedDaysOfStay] = useState<number[]>([]);
@@ -48,7 +52,7 @@ export default function QueryForm() {
         const payload = {
             selectedTasks,
             selectedPatients,
-            selectedRegions,
+            // selectedRegions,
             fromDateTime,
             toDateTime,
             selectedDaysOfStay,
@@ -58,8 +62,8 @@ export default function QueryForm() {
         console.log("Submitting query with payload:", payload);
 
         try {
-            const response = await fetch("/api/query/patients", {
-                method: "GET",
+            const response = await fetch("/api/query/db", {
+                method: "POST",
                 headers: {"Content-Type": "application/json" },
                 credentials: "include",
                 body: JSON.stringify(payload),
@@ -67,14 +71,16 @@ export default function QueryForm() {
 
             const data = await response.json();
             console.log("Query results:", data);
+            onResult({ result: data, query: payload });
         } catch (err) {
             console.error("Error submitting query:", err);
+            onResult({ result: err, query: payload });
         }
     };
 
     return (
-        <div className="p-4 border rounded shadow bg-white">
-            <h2 className="text-x1 font-bold mb-4">Query Form</h2>
+        <div className="p-4 border rounded shadow bg-white dark:bg-gray-900 dark:border-gray-700">
+            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">Query Form</h2>
             <TaskSelector 
                 value={selectedTasks} 
                 onChange={setSelectedTasks} 
@@ -106,7 +112,7 @@ export default function QueryForm() {
             />
             <button
                 onClick={handleSubmit}
-                className="mt-4 bg-blue-600 text-white px-4 py-2 rounded"
+                className="mt-4 bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded"
             >
                 Run Query
             </button>
