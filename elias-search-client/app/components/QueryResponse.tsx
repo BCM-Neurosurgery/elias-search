@@ -3,7 +3,7 @@ interface QueryResponseProps {
   payload: any;
 }
 
-export default function QueryResponse({ result, payload} : QueryResponseProps) {
+export default function QueryResponse({ result, payload } : QueryResponseProps) {
     if (!result) {
         return <p className="text-gray-600 dark:text-gray-300">No data found for your query.</p>
     }

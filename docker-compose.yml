@@ -11,7 +11,7 @@ services:
       - ./elias-search-client:/app
       - /app/node_modules # prevent host module overrides
     environment:
-      - VITE_BACKEND_URL=https://elias.bcms.bcm.edu/api
+      VITE_BACKEND_URL: https://elias.bcms.bcm.edu/api
     depends_on:
       - server
   server:
@@ -20,9 +20,11 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - DJ_USER: ${DJ_USER}
-      - D_PASSWORD: ${DJ_PASSWORD}
-      - ENVIRONMENT: ${ENVIRONMENT}
+      DJ_USER: ${DJ_USER}
+      DJ_PASSWORD: ${DJ_PASSWORD}
+      DJ_HOST: ${DJ_HOST}
+      DJ_PORT: ${DJ_PORT}
+      ENVIRONMENT: ${ENVIRONMENT}
     volumes:
       - ./elias-search-server:/app
       - ${DATALAKE_PATH}:/mnt/data/datalake/emu

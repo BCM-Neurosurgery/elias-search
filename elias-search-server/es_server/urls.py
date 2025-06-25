@@ -16,12 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from .views import ssh_auth, auth_status, query_db, get_patients
+from .views import ssh_auth, auth_status, query_db, get_formdata
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/login/', ssh_auth),
     path('auth/status/', auth_status),
     path('query/db', query_db),
-    path('query/patients', get_patients)
+    path('query/formdata', get_formdata)
 ]

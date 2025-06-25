@@ -11,12 +11,18 @@ type TimeSlot = {
     hour: number; // 0 - 23
 }
 
+interface OptionType {
+  value: string;
+  label: string;
+}
+
 interface QueryFormProps {
     onResult: (data: { result: any; query: any }) => void;
 }
 
 export default function QueryForm({ onResult } : QueryFormProps) {
     // set hooks
+    const [taskList, setTaskList] = useState<OptionType[]>([]);
     const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
     const [allTasks, setAllTasks] = useState<boolean>(true);
     const [excludeStim, setExcludeStim] = useState<boolean>(true);
@@ -30,28 +36,31 @@ export default function QueryForm({ onResult } : QueryFormProps) {
 
     // fetch patients on mount
     useEffect(() => {
-        const fetchPatients = async () => {
+        const fetchFormdata = async () => {
             try {
-                const response = await fetch("/api/query/patients", {
+                const response = await fetch("/api/query/formdata", {
+                    method: "GET",
                     credentials: "include",
                 });
                 const data = await response.json();
                 console.log("Fetched patients:", data);
 
                 setPatients(data.patients || []);
-                setSelectedPatients(data.patients || []); // Select all by default
+                const taskOptions = (data.tasks || []).map((task: string) => ({value: task, label: task}))
+                setTaskList(taskOptions);
             } catch (err) {
                 console.error("Error fetching patients:", err)
             }
         };
-
-        fetchPatients();
+        fetchFormdata();
     }, []);
 
     const handleSubmit = async () => {
         const payload = {
             selectedTasks,
             selectedPatients,
+            allTasks,
+            excludeStim,
             // selectedRegions,
             fromDateTime,
             toDateTime,
@@ -83,6 +92,7 @@ export default function QueryForm({ onResult } : QueryFormProps) {
             <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">Query Form</h2>
             <TaskSelector 
                 value={selectedTasks} 
+                taskList={taskList}
                 onChange={setSelectedTasks} 
                 allTasks={allTasks}
                 setAllTasks={setAllTasks}

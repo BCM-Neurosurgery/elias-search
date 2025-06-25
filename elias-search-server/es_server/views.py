@@ -1,7 +1,10 @@
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from paramiko import SSHClient, AutoAddPolicy
+from datajoint.schemas import VirtualModule
 import json
+from .utils import dj_conn
+from .query import QueryBuilder
 
 @csrf_exempt
 def ssh_auth(request):
@@ -32,16 +35,19 @@ def query_db(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'Invalid request method'}, status=405)
     data = json.loads(request.body)
-    return(JsonResponse(data))
+    qb = QueryBuilder(data)
+    qb.waterfall_query()
+    qb.get_stitched_tasks_in_range()
+    results = qb.format_query_results()
+    return(JsonResponse(results))
 
-def get_patients(request):
-    patient_list = [
-        "YEX",
-        "YEY",
-        "YFA",
-        "YFF",
-        "YFK",
-        "YFM",
-        "YFP"
-    ]
-    return JsonResponse({'patients': patient_list})
+def get_formdata(request):
+    conn = dj_conn()
+    schemas = VirtualModule(module_name='schemas', schema_name='emu24_stitch', connection=conn)
+    query = schemas.Patient()
+    patient_list = list(query.fetch('emu_id'))
+    query = schemas.TaskIDComments()
+    task_list = list(set(query.fetch('task_name')))
+    return JsonResponse({'patients': patient_list, 'tasks': task_list})
+
+

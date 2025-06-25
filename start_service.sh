@@ -18,4 +18,5 @@ fi
 # source env
 source ./.env
 
-docker compose up --build
+docker compose build --ssh default
+docker compose up
