@@ -35,6 +35,7 @@ def query_db(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'Invalid request method'}, status=405)
     data = json.loads(request.body)
+    print(data)
     qb = QueryBuilder(data)
     qb.waterfall_query()
     qb.get_stitched_tasks_in_range()

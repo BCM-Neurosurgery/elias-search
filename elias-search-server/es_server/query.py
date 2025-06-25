@@ -3,8 +3,11 @@ from datetime import datetime, timedelta, MINYEAR, MAXYEAR
 import datajoint as dj
 from datajoint.schemas import VirtualModule
 from pyNsXStitch.helpers import get_nsx_duration
+import os
 
 SAMPLING_RATE = 30_000
+DATALAKE_PATH = os.environ.get('DATALAKE_PATH', "/mnt/datalake/data/emu")
+STITCHED_PATH = os.environ.get('STITCHED_PATH', "/mnt/stitched/EMU-18112")
 class QueryBuilder:
     def __init__(self, data):
         self.data = data
@@ -12,7 +15,7 @@ class QueryBuilder:
         conn = dj_conn()
         self.schemas = VirtualModule(module_name='schemas', schema_name='emu24_stitch', connection=conn)
         self.query = self.schemas.NSPChunks()
-        self.stitched_query = self.schemas.StitchedChunks() & '0=1'
+        self.stitched_query = self.schemas.StitchedChunks()
     
     def waterfall_query(self):
         # run all steps of query
@@ -28,9 +31,15 @@ class QueryBuilder:
         res = self.query.fetch('patient_id', 'chunk_id')
 
         # loop through chunks and get stitched chunks!!!
-        for (pt_id, chunk_id) in res:
-            subquery = self.schemas.StitchedChunks() & f"patient_id = '{pt_id}' AND start_chunk = '{chunk_id}'"
-            self.stitched_query = self.stitched_query + subquery
+        filters = []
+        for i in range(res[0].shape[0]):
+            pt_id = res[0][i]
+            chunk_id = res[1][i]
+            filter = f"(patient_id = '{pt_id}' AND start_chunk <= '{chunk_id}' AND stop_chunk >= '{chunk_id}')"
+            filters.append(filter)
+            
+        filter = " OR ".join(filters)
+        self.stitched_query = self.stitched_query & filter
         return self.stitched_query
     
     def format_query_results(self):
@@ -46,61 +55,68 @@ class QueryBuilder:
             'source': []
         }
 
-        query_res = self.query.fetch('patient_id', 'nsp_id', 'absolute_time', 
-                                     'file', 'nev_file', 'ns3_file', 'ns5_file')
-        for (pt_id, nsp_id, absolute_time, file, nev_file, ns3_file, ns5_file) in query_res:
-            patient_emu_id = (self.schemas.Patient() & f"patient_id = '{pt_id}'").fetch1('emu_id')
+       
+        for i, entry in enumerate(self.query):
+            patient_emu_id = (self.schemas.Patient() & f"patient_id = '{entry['patient_id']}'").fetch1('emu_id')
             results['patient'].append(patient_emu_id)
-            results['start_time'].append(absolute_time)
-            results['file'].append(file)
+            results['start_time'].append(entry['absolute_time'])
             filetypes = []
-            if nev_file:
+            if entry['nev_file']:
                 filetypes.append('nev')
-            if ns5_file:
-                filetypes.append('ns5')
-                duration = get_nsx_duration(ns5_file) / SAMPLING_RATE
-                results['duration'].append(duration)
-                end_time = datetime.strptime(absolute_time, "%Y-%m-%d %H:%M:%S.%f") + timedelta(seconds=duration)
-                results['end_time'].append(end_time.strftime("%Y-%m-%d %H:%M:%S.%f"))
+                file = entry['nev_file'].replace(DATALAKE_PATH, '{DATALAKE_PATH}', 1)
+                file = file.replace('.nev', '', 1)
+                results['file'].append(file)
             else:
-                results['duration'].append('NULL')
+                results['file'].append('NULL')
+            if entry['ns5_file']:
+                try:
+                    filetypes.append('ns5')
+                    duration = get_nsx_duration(entry['ns5_file']) / SAMPLING_RATE
+                    results['duration_s'].append(duration)
+                    end_time = datetime.strptime(entry['absolute_time'], "%Y-%m-%d %H:%M:%S.%f") + timedelta(seconds=duration)
+                    results['end_time'].append(end_time.strftime("%Y-%m-%d %H:%M:%S.%f"))
+                except Exception as e:
+                    results['duration_s'].append('NULL')
+                    results['end_time'].append('NULL')
+            else:
+                results['duration_s'].append('NULL')
                 results['end_time'].append('NULL')
-            if ns3_file:
+            if entry['ns3_file']:
                 filetypes.append('ns3')
-            results['filetypes'].append(",".join(filetypes))
-            results["nsp_id"].append(nsp_id)
+            results['filetypes'].append(";".join(filetypes))
+            results["nsp_id"].append(entry['nsp_id'])
             results['source'].append('datalake')
-        query_res = self.stitched_query.fetch('patient_id', 'nsp_id', 'start_chunk', 
-                                              'start_tid', 'stop_chunk', 'stop_tid', 
-                                              'nev_file', 'ns3_file', 'ns5_file')
-        for (pt_id, nsp_id, start_chunk, start_tid, 
-             stop_chunk, stop_tid, nev_file, ns3_file, ns5_file) in query_res:
-            patient_emu_id = (self.schemas.Patient() & f"patient_id = '{pt_id}'").fetch1('emu_id')
+        for i, entry in enumerate(self.stitched_query):
+            patient_emu_id = (self.schemas.Patient() & f"patient_id = '{entry['patient_id']}'").fetch1('emu_id')
             results['patient'].append(patient_emu_id)
             results['source'].append('stitched')
-            results['nsp_id'].append(nsp_id)
+            results['nsp_id'].append(entry['nsp_id'])
             filetypes = []
-            if nev_file:
+            if entry['nev_file']:
                 filetypes.append('nev')
-                file = nev_file[:-5]
+                file = entry['nev_file'].replace(STITCHED_PATH, '{STITCHED_PATH}', 1)
+                file = file.replace('.nev', '', 1)
                 results['file'].append(file)
-            if ns5_file:
+            if entry['ns5_file']:
                 filetypes.append('ns5')
-            if ns3_file:
+            if entry['ns3_file']:
                 filetypes.append('ns3')
-            results['filetypes'].append(",".join(filetypes))
-            chunk_start = (self.schemas.NSPChunks() & f"patient_id = '{pt_id}' AND chunk_id = '{start_chunk}'").fetch1('absolute_time')
-            start_stamp = (self.schemas.StartComments() & f"patient_id = '{pt_id}' AND comment_id = '{start_tid}'").fetch1('timestamp')
-            chunk_stop = (self.schemas.NSPChunks() & f"patient_id = '{pt_id}' AND chunk_id = '{stop_chunk}'").fetch1('absolute_time')
-            stop_stamp = (self.schemas.StopComments() & f"patient_id = '{pt_id}' AND comment_id = '{stop_tid}'").fetch1('timestamp')
-            start_ts = datetime.strptime(chunk_start, "%Y-%m-%d %H:%M:%S.%f") + timedelta(seconds=start_stamp / SAMPLING_RATE)
-            end_ts = datetime.strptime(chunk_stop, "%Y-%m-%d %H:%M:%S.%f") + timedelta(seconds=stop_stamp / SAMPLING_RATE)
-            duration = end_ts - start_ts
-            results['start_time'].append(start_ts.strftime("%Y-%m-%d %H:%M:%S.%f"))
-            results['duration_s'].append(duration.total_seconds())
-            results['end_time'].append(end_ts.strftime("%Y-%m-%d %H:%M:%S.%f"))
-
-        return results    
+            results['filetypes'].append(";".join(filetypes))
+            try:
+                rec_start = (self.schemas.NSPChunks() & f"patient_id = '{entry['patient_id']}'").fetch('absolute_time', order_by='chunk_id')[0]
+                start_stamp = (self.schemas.StartComments() & f"patient_id = '{entry['patient_id']}' AND comment_id = '{entry['start_tid']}'").fetch('timestamp')[0]
+                stop_stamp = (self.schemas.StopComments() & f"patient_id = '{entry['patient_id']}' AND comment_id = '{entry['stop_tid']}'").fetch('timestamp')[0]
+                start_ts = datetime.strptime(rec_start, "%Y-%m-%d %H:%M:%S.%f") + timedelta(seconds=start_stamp / SAMPLING_RATE)
+                end_ts = datetime.strptime(rec_start, "%Y-%m-%d %H:%M:%S.%f") + timedelta(seconds=stop_stamp / SAMPLING_RATE)
+                duration = end_ts - start_ts
+                results['start_time'].append(start_ts.strftime("%Y-%m-%d %H:%M:%S.%f"))
+                results['duration_s'].append(duration.total_seconds())
+                results['end_time'].append(end_ts.strftime("%Y-%m-%d %H:%M:%S.%f"))
+            except Exception as e:
+                results['start_time'].append('NULL')
+                results['duration_s'].append('NULL')
+                results['end_time'].append('NULL')
+        return results
     
     def _timerange_query(self):
         # get our time range!!
@@ -152,14 +168,24 @@ class QueryBuilder:
         for task in self.data["selectedTasks"]:
             # get patient id and emu_id - will iterate through them to get all chunks
             data = (self.schemas.TaskIDComments() & f"task_name = '{task}'").fetch('patient_id', 'emu_id')
-            for (pt_id, emu_id) in data:
+            for i in range(data[0].shape[0]):
+                pt_id = data[0][i]
+                emu_id = data[1][i]
                 # get start comment nsp id
                 start_chunk_query = self.schemas.StartComments() & f"patient_id = '{pt_id}' AND emu_id = '{emu_id}'"
-                start_chunk_id = start_chunk_query.fetch('chunk_id')[0]
+                try:
+                    start_chunk_id = start_chunk_query.fetch('chunk_id')[0]
+                except IndexError:
+                    start_chunk_id = None
                 # get stop comment nsp id
                 stop_chunk_query = self.schemas.StopComments() & f"patient_id = '{pt_id}' AND emu_id = '{emu_id}'"
-                stop_chunk_id = stop_chunk_query.fetch('chunk_id')[0]
+                try:
+                    stop_chunk_id = stop_chunk_query.fetch('chunk_id')[0]
+                except IndexError:
+                    stop_chunk_id = None
                 # add all chunks
+                if start_chunk_id == None or stop_chunk_id == None:
+                    continue
                 for id_ in range(start_chunk_id, stop_chunk_id + 1):
                     subquery = f"(patient_id = '{pt_id}' AND chunk_id = '{id_}')"
                     filters.append(subquery)

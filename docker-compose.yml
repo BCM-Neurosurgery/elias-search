@@ -27,8 +27,8 @@ services:
       ENVIRONMENT: ${ENVIRONMENT}
     volumes:
       - ./elias-search-server:/app
-      - ${DATALAKE_PATH}:/mnt/data/datalake/emu
-      - ${STITCHED_PATH}:/mnt/stitched/EMU-18112
+      - ${DATALAKE_PATH}:/mnt/datalake/data/emu:ro
+      - ${STITCHED_PATH}:/mnt/stitched/EMU-18112:ro
       - ./elias-search-server/dj_log.log:/mnt/lake-database/stitched-logs/datajoint_computed_table.log
     command: >
       sh -c "python manage.py migrate &&

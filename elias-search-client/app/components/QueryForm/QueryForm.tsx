@@ -105,21 +105,21 @@ export default function QueryForm({ onResult } : QueryFormProps) {
                 onChange={setSelectedPatients} 
             />
             {/* <BrainRegionSelector value={selectedRegions} onChange={setSelectedRegions} /> */}
-            <DateTimeRangeSelector
+            {/* <DateTimeRangeSelector
                 fromDateTime={fromDateTime}
                 toDateTime={toDateTime}
                 onFromChange={setFromDateTime}
                 onToChange={setToDateTime}
-            />
-            <DaysOfStaySelector 
+            /> */}
+            {/* <DaysOfStaySelector 
                 maxDay={10}
                 selectedDays={selectedDaysOfStay} 
                 onChange={setSelectedDaysOfStay} 
-            />
-            <TimeOfWeekSelector 
+            /> */}
+            {/* <TimeOfWeekSelector 
                 selectedSlots={selectedTimesOfWeek} 
                 onChange={setSelectedTimesOfWeek} 
-            />
+            /> */}
             <button
                 onClick={handleSubmit}
                 className="mt-4 bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded"
