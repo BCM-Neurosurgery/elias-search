@@ -5,6 +5,7 @@ import PatientSelector from "./PatientSelector";
 import DateTimeRangeSelector from "./DateTimeRangeSelector";
 import DaysOfStaySelector from "./DaysOfStaySelector";
 import TimeOfWeekSelector from "./TimeOfWeekSelector";
+import Spinner from '../Spinner';
 
 type TimeSlot = {
     day: string; // Sunday, Monday, ...
@@ -32,7 +33,10 @@ export default function QueryForm({ onResult } : QueryFormProps) {
     const [fromDateTime, setFromDateTime] = useState<string | null>(null);
     const [toDateTime, setToDateTime] = useState<string | null>(null);
     const [selectedDaysOfStay, setSelectedDaysOfStay] = useState<number[]>([]);
-    const [selectedTimesOfWeek, setSelectedTimesOfWeek] = useState<TimeSlot[]>([]); // grid state - design TBD
+    const [selectedTimesOfWeek, setSelectedTimesOfWeek] = useState<TimeSlot[]>([]); 
+
+    const [formLoading, setFormLoading] = useState(true);
+    const [queryLoading, setQueryLoading] = useState(false);
 
     // fetch patients on mount
     useEffect(() => {
@@ -50,12 +54,16 @@ export default function QueryForm({ onResult } : QueryFormProps) {
                 setTaskList(taskOptions);
             } catch (err) {
                 console.error("Error fetching patients:", err)
+            } finally {
+                setFormLoading(false);
             }
         };
         fetchFormdata();
     }, []);
 
     const handleSubmit = async () => {
+        setQueryLoading(true);
+
         const payload = {
             selectedTasks,
             selectedPatients,
@@ -84,8 +92,19 @@ export default function QueryForm({ onResult } : QueryFormProps) {
         } catch (err) {
             console.error("Error submitting query:", err);
             onResult({ result: err, query: payload });
+        } finally {
+            setQueryLoading(false);
         }
     };
+
+      if (formLoading) {
+        return (
+            <div className="p-8 text-center">
+                <Spinner />
+                <p className="mt-4 text-gray-700 dark:text-gray-300">Loading form...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="p-4 border rounded shadow bg-white dark:bg-gray-900 dark:border-gray-700">
@@ -122,9 +141,18 @@ export default function QueryForm({ onResult } : QueryFormProps) {
             /> */}
             <button
                 onClick={handleSubmit}
-                className="mt-4 bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded"
+                className={`mt-4 bg-blue-600 text-white px-4 py-2 rounded ${queryLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
+                disabled={queryLoading}
             >
-                Run Query
+                {queryLoading ? (
+                    <span className="flex items-center">
+                        <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
+                        </svg>
+                        Running...
+                    </span>
+                ) : 'Run Query'}
             </button>
 
         </div>
