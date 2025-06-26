@@ -23,7 +23,7 @@ def dj_conn():
     dj.config['database.port'] = int(os.environ["DJ_PORT"])
     dj.config['safemode'] = settings.DJ_CONFIG_SAFEMODE
     dj.config['stores'] = settings.DJ_CONFIG_STORES
-    dj.config["filepath_checksum_size_limit"] = 0
+    dj.config["filepath_checksum_size_limit"] = -1
     os.environ['DJ_SUPPORT_FILEPATH_MANAGEMENT'] = 'TRUE'
 
     # always reset connection on each call

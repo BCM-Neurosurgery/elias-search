@@ -38,7 +38,6 @@ def query_db(request):
     print(data)
     qb = QueryBuilder(data)
     qb.waterfall_query()
-    qb.get_stitched_tasks_in_range()
     results = qb.format_query_results()
     return(JsonResponse(results))
 
