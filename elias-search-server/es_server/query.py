@@ -2,6 +2,8 @@ from .utils import dj_conn
 from datetime import datetime, timedelta, MINYEAR, MAXYEAR
 import datajoint as dj
 from datajoint.schemas import VirtualModule
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 from pyNsXStitch.helpers import get_nsx_start_timestamp, get_nsx_duration
 import os
 
@@ -9,7 +11,7 @@ SAMPLING_RATE = 30_000
 DATALAKE_PATH = os.environ.get('DATALAKE_PATH', "/mnt/datalake/data/emu")
 STITCHED_PATH = os.environ.get('STITCHED_PATH', "/mnt/stitched/EMU-18112")
 class QueryBuilder:
-    def __init__(self, data):
+    def __init__(self, data, session_id=None):
         self.data = data
         # connect to db and get all data
         conn = dj_conn()
@@ -18,20 +20,36 @@ class QueryBuilder:
             self.table = self.schemas.NSPChunks()
         else:
             self.table = self.schemas.StitchedChunks()
+        self.session_id = session_id
+        self.channel_layer = get_channel_layer()
     
+    def send_status(self, message):
+        if self.session_id:
+            async_to_sync(self.channel_layer.group_send)(
+                f'progress_{self.session_id}',
+                {
+                    'type': 'send_progress',
+                    'message': {'status': message}
+                }
+            )
+
     def waterfall_query(self):
         if self.data["mode"] == "datalake":
             # run all steps of query
             # self._timerange_query_dl()
+            self.send_status("filtering patients")
             self._patient_query()
+            self.send_status("filtering tasks")
             self._task_query_dl()
             # self._stay_day_query()
             # self._weektime_query()
         else:
             # self._timerange_query_s()
+            self.send_status("filtering patients")
             self._patient_query()
             # self._stay_day_query_s()
             # self._weektime_query_s()
+            self.send_status("filtering tasks")
             self._task_query_s()
         return self.table
     
@@ -48,8 +66,9 @@ class QueryBuilder:
             'source': []
         }
 
+        total = len(self.table)
         if self.data["mode"] == "datalake":
-            for row in self.table:
+            for i, row in enumerate(self.table):
                 patient_emu_id = (self.schemas.Patient() & f"patient_id = '{row['patient_id']}'").fetch1('emu_id')
                 res_patient = patient_emu_id
                 formatted_time = datetime.strptime(row['absolute_time'], "%Y-%m-%d %H:%M:%S.%f").strftime("'%Y-%m-%d %H:%M:%S'")
@@ -92,8 +111,11 @@ class QueryBuilder:
                 results['filetypes'].append(res_filetypes)
                 results["nsp_id"].append(res_nsp_id)
                 results['source'].append(res_source)
+
+                if i % 20 == 0:
+                    self.send_status(f"Processed {i}/{total} rows")
         else:
-            for row in self.table:
+            for i, row in enumerate(self.table):
                 patient_emu_id = (self.schemas.Patient() & f"patient_id = '{row['patient_id']}'").fetch1('emu_id')
                 # set available res
                 res_patient = patient_emu_id
@@ -141,6 +163,8 @@ class QueryBuilder:
                 results['filetypes'].append(res_filetypes)
                 results["nsp_id"].append(res_nsp_id)
                 results['source'].append(res_source)
+                if i % 20 == 0:
+                    self.send_status(f"Processed {i}/{total} rows")
 
         return results
     

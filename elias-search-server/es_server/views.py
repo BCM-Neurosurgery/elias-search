@@ -35,8 +35,12 @@ def query_db(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'Invalid request method'}, status=405)
     data = json.loads(request.body)
-    print(data)
-    qb = QueryBuilder(data)
+    session_id = data.get('session_id')
+
+    if not session_id:
+        return JsonResponse({'error': 'Missing session_id'}, status=400)
+    
+    qb = QueryBuilder(data, session_id=session_id)
     qb.waterfall_query()
     results = qb.format_query_results()
     return(JsonResponse(results))

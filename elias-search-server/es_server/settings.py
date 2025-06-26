@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels'
     #'es_server.apps.DatajointConn',
 ]
 
@@ -73,6 +74,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'es_server.wsgi.application'
+ASGI_APPLICATION = 'es_server.asgi.application'
 
 
 # Database
@@ -141,3 +143,10 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "https://elias.bcms.bcm.edu",  # adjust as needed
 ]
+
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}

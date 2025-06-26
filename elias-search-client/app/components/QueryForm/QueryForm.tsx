@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { v4 as uuidv4 } from 'uuid';
 import TaskSelector from "./TaskSelector";
 import PatientSelector from "./PatientSelector";
 // import BrainRegionSelector from "./DateTimeRangeSelector";
 import DateTimeRangeSelector from "./DateTimeRangeSelector";
 import DaysOfStaySelector from "./DaysOfStaySelector";
 import TimeOfWeekSelector from "./TimeOfWeekSelector";
+import ModeSelector from "./ModeSelector";
 import Spinner from '../Spinner';
 
 type TimeSlot = {
@@ -25,6 +27,7 @@ export default function QueryForm({ onResult } : QueryFormProps) {
     // set hooks
     const [taskList, setTaskList] = useState<OptionType[]>([]);
     const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
+    const [allData, setAllData] = useState<boolean>(true);
     const [allTasks, setAllTasks] = useState<boolean>(true);
     const [excludeStim, setExcludeStim] = useState<boolean>(true);
     const [patients, setPatients] = useState<string[]>([]);
@@ -34,9 +37,12 @@ export default function QueryForm({ onResult } : QueryFormProps) {
     const [toDateTime, setToDateTime] = useState<string | null>(null);
     const [selectedDaysOfStay, setSelectedDaysOfStay] = useState<number[]>([]);
     const [selectedTimesOfWeek, setSelectedTimesOfWeek] = useState<TimeSlot[]>([]); 
+    const [mode, setMode] = useState<"datalake" | "stitched">("datalake");
 
     const [formLoading, setFormLoading] = useState(true);
     const [queryLoading, setQueryLoading] = useState(false);
+    const [queryStatus, setQueryStatus] = useState<string | null>(null);
+    const [progress, setProgress] = useState<{ current: number, total: number} | null>(null);
 
     // fetch patients on mount
     useEffect(() => {
@@ -62,11 +68,34 @@ export default function QueryForm({ onResult } : QueryFormProps) {
     }, []);
 
     const handleSubmit = async () => {
+        const session_id = uuidv4();
         setQueryLoading(true);
+        setQueryStatus("Starting...");
+        setProgress(null);
+
+        const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+        const wsBase = `${wsScheme}://${window.location.host}`;
+        const ws = new WebSocket(`${wsBase}/ws/query/${session_id}`);
+
+        ws.onmessage = (event) => {
+            const message = event.data;
+
+            if (message.startsWith("Processed")) {
+                const match = message.match(/Processed (\d+)\/(\d+)/i);
+                if (match) {
+                    const current = parseInt(match[1]);
+                    const total = parseInt(match[2]);
+                    setProgress({ current, total });
+                }
+            } else {
+                setQueryStatus(message);
+            }
+        }
 
         const payload = {
             selectedTasks,
             selectedPatients,
+            allData,
             allTasks,
             excludeStim,
             // selectedRegions,
@@ -74,6 +103,7 @@ export default function QueryForm({ onResult } : QueryFormProps) {
             toDateTime,
             selectedDaysOfStay,
             selectedTimesOfWeek,
+            mode
         }
         
         console.log("Submitting query with payload:", payload);
@@ -94,6 +124,7 @@ export default function QueryForm({ onResult } : QueryFormProps) {
             onResult({ result: err, query: payload });
         } finally {
             setQueryLoading(false);
+            ws.close();
         }
     };
 
@@ -117,6 +148,8 @@ export default function QueryForm({ onResult } : QueryFormProps) {
                 setAllTasks={setAllTasks}
                 excludeStim={excludeStim}
                 setExcludeStim={setExcludeStim}
+                allData={allData}
+                setAllData={setAllData}
             />
             <PatientSelector 
                 patients={patients}
@@ -139,6 +172,7 @@ export default function QueryForm({ onResult } : QueryFormProps) {
                 selectedSlots={selectedTimesOfWeek} 
                 onChange={setSelectedTimesOfWeek} 
             /> */}
+            <ModeSelector mode={mode} setMode={setMode} />
             <button
                 onClick={handleSubmit}
                 className={`mt-4 bg-blue-600 text-white px-4 py-2 rounded ${queryLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
@@ -154,7 +188,23 @@ export default function QueryForm({ onResult } : QueryFormProps) {
                     </span>
                 ) : 'Run Query'}
             </button>
-
+            {queryLoading && (
+                <div className="mt-4 text-sm text-gray-700 dark:text-gray-300">
+                    {queryStatus?.startsWith("filtering") ? (
+                        <p className="italic animate-pulse">{queryStatus}</p>
+                    ) : progress ? (
+                        <div>
+                            <p>{`Processing row ${progress.current} of ${progress.total}`}</p>
+                            <div className="w-full bg-gray-300 dark:bg-gray-800 rounded h-2 mt-1">
+                                <div
+                                className="bg-blue-600 h-2 rounded"
+                                style={{ width: `${(progress.current / progress.total) * 100}%`}}
+                                />
+                            </div>
+                        </div>
+                    ) : null}
+                </div>
+            )}
         </div>
     )
 }

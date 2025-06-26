@@ -41,11 +41,9 @@ export default function QueryResponse({ result, payload }: QueryResponseProps) {
   }, [result]);
 
   const [pageIndex, setPageIndex] = useState(0);
-  const [excludeDatalake, setExcludeDatalake] = useState(false);
-  const pageSize = 50;
-  const filteredData = excludeDatalake ? data.filter(row => row.source !== "datalake") : data;
-  const pagedData = filteredData.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
-  const pageCount = Math.ceil(filteredData.length / pageSize);
+  const pageSize = 20;
+  const pagedData = data.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
+  const pageCount = Math.ceil(data.length / pageSize);
 
   const table = useReactTable({
     data,
@@ -65,7 +63,7 @@ export default function QueryResponse({ result, payload }: QueryResponseProps) {
 
   const handleDownloadCSV = () => {
     const csv = [Object.keys(result).join(","),
-  ...filteredData.map(row => Object.values(row).join(","))
+  ...data.map(row => Object.values(row).join(","))
 ].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const link = document.createElement("a");
@@ -78,15 +76,6 @@ export default function QueryResponse({ result, payload }: QueryResponseProps) {
 
   return (
     <div className="p-4 border rounded shadow-sm bg-white dark:bg-gray-900 dark:border-gray-700">
-        <label className="inline-flex items-center space-x-2">
-            <input
-            type="checkbox"
-            checked={excludeDatalake}
-            onChange={(e) => {setPageIndex(0); setExcludeDatalake(e.target.checked)}}
-            className="form-checkbox"
-            />
-        <span className="text-sm text-gray-800 dark:text-gray-200">Exclude Datalake Entries</span>
-        </label>
       <div className="overflow-x-auto">
         <table className="min-w-full table-auto border-collapse">
           <thead>
@@ -114,7 +103,7 @@ export default function QueryResponse({ result, payload }: QueryResponseProps) {
         </table>
       </div>
 
-      <div className="flex justify-between items-center mt-4">
+      <div className="flex flex-col sm:flex-row sm:justify-between items-center mt-4 gap-2 sm:gap-0">
         <div className="space-x-2">
           <button
             onClick={() => setPageIndex(Math.max(0, pageIndex - 1))}
@@ -130,6 +119,10 @@ export default function QueryResponse({ result, payload }: QueryResponseProps) {
           >
             Next
           </button>
+        </div>
+
+        <div>
+          {`Showing ${pageIndex * pageSize + 1}-${Math.min((pageIndex + 1) * pageSize,data.length)} of ${data.length} entries`}
         </div>
 
         <div>
