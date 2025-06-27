@@ -4,14 +4,14 @@ services:
   client:
     build:
       context: ./elias-search-client
-      dockerfile: Dockerfile.dev
     ports:
       - "3000:3000"
     volumes:
       - ./elias-search-client:/app
       - /app/node_modules # prevent host module overrides
     environment:
-      VITE_BACKEND_URL: https://elias.bcms.bcm.edu/api
+      VITE_BACKEND_URL: ${BACKEND_URL}
+      VITE_WEBSOCKET_URL: ${WEBSOCKET_URL}
     depends_on:
       - server
   server:
@@ -32,17 +32,6 @@ services:
       - ./elias-search-server/dj_log.log:/mnt/lake-database/stitched-logs/datajoint_computed_table.log
     command: >
       sh -c "python manage.py migrate && daphne -b 0.0.0.0 -p 8080 es_server.asgi:application"
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "8443:443"
-      - "80:80"
-    volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-    depends_on:
-      - client
-      - server
   
 
 

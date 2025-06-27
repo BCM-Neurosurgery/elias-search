@@ -60,7 +60,7 @@ export default function QueryForm({ onResult } : QueryFormProps) {
     useEffect(() => {
         const fetchFormdata = async () => {
             try {
-                const response = await fetch("/api/query/formdata", {
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/query/formdata`, {
                     method: "GET",
                     credentials: "include",
                 });
@@ -87,9 +87,7 @@ export default function QueryForm({ onResult } : QueryFormProps) {
 
         onResult({ result: null, query: null });
 
-        const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
-        const wsBase = `${wsScheme}://${window.location.host}`;
-        const ws = new WebSocket(`${wsBase}/ws/ws/query-progress/${session_id}`);
+        const ws = new WebSocket(`${import.meta.env.VITE_WEBSOCKET_URL}/ws/query-progress/${session_id}`);
 
         ws.onmessage = (event) => {
             let parsed;
@@ -137,7 +135,7 @@ export default function QueryForm({ onResult } : QueryFormProps) {
             console.log("Submitting query with payload:", payload);
 
             try {
-                const response = await fetch("/api/query/db", {
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/query/db`, {
                     method: "POST",
                     headers: {"Content-Type": "application/json" },
                     credentials: "include",

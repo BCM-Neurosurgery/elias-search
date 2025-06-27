@@ -80,7 +80,7 @@ export default function TaskSelector({
         </label>
       </div>
 
-      <div className={!allTasks && !allData ? "" : "opacity-50 pointer-events-none"}>
+      <div className={!allTasks && !allData ? "dark" : "dark opacity-50 pointer-events-none"}>
         <Select
           isMulti
           options={taskList}
@@ -89,6 +89,18 @@ export default function TaskSelector({
           placeholder="Type to include tasks"
           className="w-full text-black dark:text-white"
           classNamePrefix="react-select"
+          theme={(theme) => ({
+            ...theme,
+            colors: {
+              ...theme.colors,
+              neutral0: 'transparent',       // Background for control
+              neutral80: 'white',            // Text color
+              primary: '#2563eb',            // blue-600
+              primary25: '#374151',          // gray-700 for hover
+              neutral20: '#6b7280',          // gray-500 for border
+              neutral30: '#9ca3af',          // gray-400 for focused border
+            },
+          })}
         />
       </div>
     </div>

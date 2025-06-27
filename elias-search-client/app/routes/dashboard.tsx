@@ -13,7 +13,7 @@ export default function Dashboard() {
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                const response = await fetch("/api/auth/status/", {
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/status/`, {
                     credentials: "include",
                 });
                 const data = await response.json();

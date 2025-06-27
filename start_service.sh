@@ -19,4 +19,4 @@ fi
 source ./.env
 
 docker compose build --ssh default
-docker compose up
+docker compose up -d
