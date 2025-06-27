@@ -23,7 +23,7 @@ export default function ModeSelector({ mode, setMode }: ModeSelectorProps) {
                     className={`px-4 py-2 rounded-1-full border ${
                         !isDatalake ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-700"
                         } cursor-pointer`}
-                    onClick={() => setMode("datalake")}
+                    onClick={() => setMode("stitched")}
                 >
                     Stitched
                 </span>

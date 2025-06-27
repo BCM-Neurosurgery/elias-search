@@ -80,27 +80,17 @@ export default function TaskSelector({
         </label>
       </div>
 
-      {!allTasks && !allData && (
+      <div className={!allTasks && !allData ? "" : "opacity-50 pointer-events-none"}>
         <Select
           isMulti
           options={taskList}
           value={selectedOptions}
           onChange={handleSelectChange}
           placeholder="Type to include tasks"
-          className="dark:text-white dark:bg-gray-900"
+          className="w-full text-black dark:text-white"
           classNamePrefix="react-select"
-          theme={(theme) => ({
-            ...theme,
-            colors: {
-              ...theme.colors,
-              neutral0: "#1f2937", // background
-              neutral80: "#f9fafb", // text
-              primary25: "#374151",
-              primary: "#3b82f6",
-            },
-          })}
         />
-      )}
+      </div>
     </div>
   );
 }

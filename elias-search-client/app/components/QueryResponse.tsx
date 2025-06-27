@@ -41,7 +41,7 @@ export default function QueryResponse({ result, payload }: QueryResponseProps) {
   }, [result]);
 
   const [pageIndex, setPageIndex] = useState(0);
-  const pageSize = 20;
+  const pageSize = 10;
   const pagedData = data.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
   const pageCount = Math.ceil(data.length / pageSize);
 

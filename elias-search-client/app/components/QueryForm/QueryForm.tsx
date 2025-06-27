@@ -42,7 +42,19 @@ export default function QueryForm({ onResult } : QueryFormProps) {
     const [formLoading, setFormLoading] = useState(true);
     const [queryLoading, setQueryLoading] = useState(false);
     const [queryStatus, setQueryStatus] = useState<string | null>(null);
-    const [progress, setProgress] = useState<{ current: number, total: number} | null>(null);
+    const [progress, setProgress] = useState<{ current: number, total: number}>({ current: 0, total: 1});
+    const [dotCount, setDotCount] = useState(1);
+
+    // ellipses counter
+    useEffect(() => {
+        if (!queryLoading) return;
+
+        const interval = setInterval(() => {
+            setDotCount((prev) => (prev + 1) % 4);
+        }, 500); // cycles every 0.5s
+
+        return () => clearInterval(interval);
+    }, [queryLoading])
 
     // fetch patients on mount
     useEffect(() => {
@@ -71,14 +83,26 @@ export default function QueryForm({ onResult } : QueryFormProps) {
         const session_id = uuidv4();
         setQueryLoading(true);
         setQueryStatus("Starting...");
-        setProgress(null);
+        setProgress({current: 0, total: 1});
+
+        onResult({ result: null, query: null });
 
         const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
         const wsBase = `${wsScheme}://${window.location.host}`;
-        const ws = new WebSocket(`${wsBase}/ws/query/${session_id}`);
+        const ws = new WebSocket(`${wsBase}/ws/ws/query-progress/${session_id}`);
 
         ws.onmessage = (event) => {
-            const message = event.data;
+            let parsed;
+
+            try {
+                parsed = JSON.parse(event.data);
+            } catch (err) {
+                console.error("Failed to parse WebSocket message:", event.data);
+                return
+            }
+
+            const message = parsed.status;
+            console.log("WebSocket status:", message);
 
             if (message.startsWith("Processed")) {
                 const match = message.match(/Processed (\d+)\/(\d+)/i);
@@ -86,13 +110,16 @@ export default function QueryForm({ onResult } : QueryFormProps) {
                     const current = parseInt(match[1]);
                     const total = parseInt(match[2]);
                     setProgress({ current, total });
+                    setQueryStatus("loading results");
                 }
             } else {
                 setQueryStatus(message);
             }
         }
 
-        const payload = {
+        // Wait for the WebSocket to open before continuing with request
+        ws.onopen = async () => {
+            const payload = {
             selectedTasks,
             selectedPatients,
             allData,
@@ -103,30 +130,43 @@ export default function QueryForm({ onResult } : QueryFormProps) {
             toDateTime,
             selectedDaysOfStay,
             selectedTimesOfWeek,
-            mode
+            mode,
+            session_id
         }
         
-        console.log("Submitting query with payload:", payload);
+            console.log("Submitting query with payload:", payload);
 
-        try {
-            const response = await fetch("/api/query/db", {
-                method: "POST",
-                headers: {"Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify(payload),
-            });
+            try {
+                const response = await fetch("/api/query/db", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify(payload),
+                });
 
-            const data = await response.json();
-            console.log("Query results:", data);
-            onResult({ result: data, query: payload });
-        } catch (err) {
-            console.error("Error submitting query:", err);
-            onResult({ result: err, query: payload });
-        } finally {
+                const data = await response.json();
+                console.log("Query results:", data);
+                onResult({ result: data, query: payload });
+            } catch (err) {
+                console.error("Error submitting query:", err);
+                onResult({ result: err, query: payload });
+            } finally {
+                setQueryLoading(false);
+                ws.close();
+            }
+        };
+
+         // Optional: Handle errors
+        ws.onerror = (e) => {
+            console.error("WebSocket error", e);
+            setQueryStatus("WebSocket error — check connection.");
             setQueryLoading(false);
-            ws.close();
-        }
-    };
+        };
+
+        ws.onclose = () => {
+            console.log("WebSocket closed");
+        };
+    }
 
       if (formLoading) {
         return (
@@ -173,38 +213,57 @@ export default function QueryForm({ onResult } : QueryFormProps) {
                 onChange={setSelectedTimesOfWeek} 
             /> */}
             <ModeSelector mode={mode} setMode={setMode} />
-            <button
-                onClick={handleSubmit}
-                className={`mt-4 bg-blue-600 text-white px-4 py-2 rounded ${queryLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
-                disabled={queryLoading}
-            >
-                {queryLoading ? (
-                    <span className="flex items-center">
-                        <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
+            <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0">
+                <button
+                    onClick={handleSubmit}
+                    className={`w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded ${
+                    queryLoading ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700"
+                    }`}
+                    disabled={queryLoading}
+                >
+                    {queryLoading ? (
+                    <span className="flex items-center justify-center">
+                        <svg
+                        className="animate-spin h-5 w-5 mr-2 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        >
+                        <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                        />
+                        <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"
+                        />
                         </svg>
                         Running...
                     </span>
-                ) : 'Run Query'}
-            </button>
-            {queryLoading && (
-                <div className="mt-4 text-sm text-gray-700 dark:text-gray-300">
-                    {queryStatus?.startsWith("filtering") ? (
-                        <p className="italic animate-pulse">{queryStatus}</p>
-                    ) : progress ? (
-                        <div>
-                            <p>{`Processing row ${progress.current} of ${progress.total}`}</p>
-                            <div className="w-full bg-gray-300 dark:bg-gray-800 rounded h-2 mt-1">
-                                <div
-                                className="bg-blue-600 h-2 rounded"
-                                style={{ width: `${(progress.current / progress.total) * 100}%`}}
-                                />
-                            </div>
-                        </div>
-                    ) : null}
+                    ) : (
+                    "Run Query"
+                    )}
+                </button>
+
+                {queryLoading && (
+                    <div className="flex-1 text-sm text-gray-700 dark:text-gray-300 mt-2 sm:mt-0">
+                    <p className="italic animate-pulse">{queryStatus}{".".repeat(dotCount)}</p>
+                    <div className="w-full bg-gray-300 dark:bg-gray-800 rounded h-2 overflow-hidden max-w-lg">
+                            <div
+                            className="bg-blue-600 h-2 transition-all duration-300 ease-out"
+                            style={{
+                                width: `${(progress.current / progress.total) * 100}%`,
+                            }}
+                            />
+                    </div>
+                    </div>
+                )}
                 </div>
-            )}
         </div>
     )
 }

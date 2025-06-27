@@ -13,3 +13,21 @@ body {
     color-scheme: dark;
   }
 }
+
+.react-select__control {
+  background-color: white;
+  color: black;
+}
+
+.dark .react-select__control {
+  background-color: #1f2937; /* gray-800 */
+  color: white;
+}
+
+.react-select__menu {
+  background-color: white;
+}
+
+.dark .react-select__menu {
+  background-color: #1f2937;
+}
