@@ -19,4 +19,4 @@ fi
 source ./.env.dev
 
 docker compose -f docker-compose-dev.yml build --ssh default
-docker compose -f docker-compose-dev.yml up
+docker compose -f docker-compose-dev.yml up --force-recreate

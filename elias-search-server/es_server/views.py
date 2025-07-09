@@ -1,5 +1,6 @@
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from django.contrib.auth import login, logout
 from paramiko import SSHClient, AutoAddPolicy
 from datajoint.schemas import VirtualModule
 import json
@@ -23,9 +24,19 @@ def ssh_auth(request):
         ssh.close()
         request.session['ssh_authenticated'] = True
         request.session['username'] = username
+        request.session.modified = True
         return JsonResponse({'success': True})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=401)
+
+@csrf_exempt
+def auth_logout(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid request method'}, status=405)
+    logout(request)
+    request.session['ssh_authenticated'] = False
+    request.session['username'] = ''
+    return JsonResponse({'success': True})
 
 def auth_status(request):
     return JsonResponse({"authenticated": request.session.get("ssh_authenticated", False)})

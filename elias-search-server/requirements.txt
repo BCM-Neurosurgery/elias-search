@@ -3,6 +3,7 @@ paramiko
 datajoint
 channels
 daphne
+django-cors-headers
 emu24 @ git+ssh://git@github.com/BCM-Neurosurgery/EMU24Schema.git@main
 brpylib @ git+ssh://git@github.com/BCM-Neurosurgery/Blackrock-Python-Utilities.git@main
 pyNsXStitch @ git+ssh://git@github.com/BCM-Neurosurgery/pyNsXStitch.git@main

@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from corsheaders.defaults import default_headers
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,6 +39,7 @@ INSTALLED_APPS = [
     'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
+    'corsheaders',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
@@ -47,14 +49,19 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware'
    # 'es_server.middleware.datajoint_conn_middleware.DataJointConnectionMiddleware'
+]
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
 ROOT_URLCONF = 'es_server.urls'
@@ -140,11 +147,28 @@ SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
 # TODO: add username cookie
 
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "X-CSRFToken",
+]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
+    "http://localhost:8443",
+    "http://127.0.0.1:8443",
+    "http://elias.bcms.bcm.edu",
+    "https://elias.bcms.bcm.edu:8444",
+    "http://elias.bcms.bcm.edu:3000",
+    "https://elias.bcms.bcm.edu:3000",
+    "http://elias.bcms.bcm.edu:3001",
+    "http://elias.bcms.bcm.edu:8443",
+    "http://elias.bcms.bcm.edu:8444",
     "https://elias.bcms.bcm.edu",  # adjust as needed
 ]
+
+
 
 
 CHANNEL_LAYERS = {

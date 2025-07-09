@@ -1,4 +1,4 @@
-from .utils import dj_conn
+from .utils import dj_conn, parse_time
 from datetime import datetime, timedelta, MINYEAR, MAXYEAR
 import datajoint as dj
 from datajoint.schemas import VirtualModule
@@ -71,7 +71,7 @@ class QueryBuilder:
             for i, row in enumerate(self.table):
                 patient_emu_id = (self.schemas.Patient() & f"patient_id = '{row['patient_id']}'").fetch1('emu_id')
                 res_patient = patient_emu_id
-                formatted_time = datetime.strptime(row['absolute_time'], "%Y-%m-%d %H:%M:%S.%f").strftime("'%Y-%m-%d %H:%M:%S'")
+                formatted_time = parse_time(row['absolute_time']).strftime("'%Y-%m-%d %H:%M:%S'")
                 res_start_time = formatted_time
                 filetypes = []
                 if row['nev_file']:
@@ -86,7 +86,7 @@ class QueryBuilder:
                         filetypes.append('ns5')
                         duration = get_nsx_duration(row['ns5_file']) / SAMPLING_RATE
                         res_duration_s = f"{duration:.2f}"
-                        end_time = datetime.strptime(row['absolute_time'], "%Y-%m-%d %H:%M:%S.%f") + timedelta(seconds=duration)
+                        end_time = parse_time(row['absolute_time']) + timedelta(seconds=duration)
                         res_end_time = end_time.strftime("%Y-%m-%d %H:%M:%S")
                     except Exception as e:
                         res_duration_s = 'NULL'
@@ -143,7 +143,7 @@ class QueryBuilder:
                         self.schemas.StartComments() & 
                         f"patient_id = '{row['patient_id']}' AND comment_id = '{row['start_tid']}' AND toc_id = '{row['toc_id']}' AND nsp_id = '{row['nsp_id']}'"
                         ).fetch('timestamp')[0]
-                    chunk_time = datetime.strptime(chunk_time, "%Y-%m-%d %H:%M:%S.%f")
+                    chunk_time = parse_time(chunk_time)
                     comment_offset = (start_stamp - get_nsx_start_timestamp(chunk_ns5)) / SAMPLING_RATE
                     duration = get_nsx_duration(row['ns5_file']) / SAMPLING_RATE
                     start_ts = chunk_time + timedelta(seconds=comment_offset)
@@ -252,7 +252,7 @@ class QueryBuilder:
         for pt_id in pt_ids:
             # get admission start
             admission_start = self.schemas.Admission() & f"patient_id = '{pt_id}'"
-            admission_start = datetime.strptime(admission_start, "%Y-%m-%d %H:%M:%S.%f").replace(hour=0, minute=0, second=0, microsecond=0)
+            admission_start = parse_time(admission_start).replace(hour=0, minute=0, second=0, microsecond=0)
 
             # loop through day list
             for day_delta in self.data["selectedDaysOfStay"]:
@@ -274,8 +274,8 @@ class QueryBuilder:
         min_ts_str = (dj.U().aggr(self.table, n='min(absolute_time)').fetch1("n"))
         max_ts_str = (dj.U().aggr(self.table, n='max(absolute_time)').fetch1("n"))
 
-        min_dt = datetime.strptime(min_ts_str, "%Y-%m-%d %H:%M:%S.%f")
-        max_dt = datetime.strptime(max_ts_str, "%Y-%m-%d %H:%M:%S.%f")
+        min_dt = parse_time(min_ts_str)
+        max_dt = parse_time(max_ts_str)
 
         # use python week
         day_to_index = {

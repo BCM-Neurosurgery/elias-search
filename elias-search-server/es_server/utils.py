@@ -28,3 +28,11 @@ def dj_conn():
 
     # always reset connection on each call
     return dj.conn(reset=True)
+
+def parse_time(s):
+    for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S"):
+        try:
+            return datetime.strptime(s, fmt)
+        except ValueError:
+            continue
+    raise ValueError(f"time data {s!r} does not match expected formats")

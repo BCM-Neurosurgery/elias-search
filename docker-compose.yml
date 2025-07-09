@@ -3,15 +3,12 @@ version: '3.8'
 services:
   client:
     build:
-      context: ./elias-search-client
+      context: ./elias-search-web
     ports:
-      - "3000:3000"
-    volumes:
-      - ./elias-search-client:/app
-      - /app/node_modules # prevent host module overrides
+      - "8443:3000"
     environment:
-      VITE_BACKEND_URL: ${BACKEND_URL}
-      VITE_WEBSOCKET_URL: ${WEBSOCKET_URL}
+      NEXT_PUBLIC_BACKEND_URL: ${BACKEND_URL}
+      NEXT_PUBLIC_WEBSOCKET_URL: ${WEBSOCKET_URL}
     depends_on:
       - server
     restart: unless-stopped
@@ -27,7 +24,7 @@ services:
       DJ_PORT: ${DJ_PORT}
       ENVIRONMENT: ${ENVIRONMENT}
     volumes:
-      - ./elias-search-server:/app
+      - ./elias-search-server/db.sqlite3:/app/db.sqlite3
       - ${DATALAKE_PATH}:/mnt/datalake/data/emu:ro
       - ${STITCHED_PATH}:/mnt/stitched/EMU-18112:ro
       - ./elias-search-server/dj_log.log:/mnt/lake-database/stitched-logs/datajoint_computed_table.log
