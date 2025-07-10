@@ -24,11 +24,3 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
-
-@media (prefers-color-scheme: dark) {
-  .my-react-select { --background: black, --color: gray }
-}
-
-@media (prefers-color-scheme: light) {
-  .my-react-select { --background: white, --color: darkgray }
-}

@@ -141,7 +141,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 SESSION_COOKIE_NAME = "bcm_auth"
 SESSION_COOKIE_AGE = 3600 * 6 # 6 hours
-SESSION_COOKIE_SECURE = False  # set to True in prod when using HTTPS
+SESSION_COOKIE_SECURE = True  # set to True in prod when using HTTPS
 SESSION_COOKIE_SAMESITE = 'None'
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
