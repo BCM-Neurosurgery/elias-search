@@ -36,6 +36,7 @@ export default function QueryForm({ onResult } : QueryFormProps) {
     // const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
     const [fromDateTime, setFromDateTime] = useState<string | null>(null);
     const [toDateTime, setToDateTime] = useState<string | null>(null);
+    const [maxDay, setMaxDay] = useState<number>(5);
     const [selectedDaysOfStay, setSelectedDaysOfStay] = useState<number[]>([]);
     const [selectedTimesOfWeek, setSelectedTimesOfWeek] = useState<TimeSlot[]>([]); 
     const [mode, setMode] = useState<"datalake" | "stitched">("datalake");
@@ -71,6 +72,7 @@ export default function QueryForm({ onResult } : QueryFormProps) {
                 setPatients(data.patients || []);
                 const taskOptions = (data.tasks || []).map((task: string) => ({value: task, label: task}))
                 setTaskList(taskOptions);
+                setMaxDay(data.max_days || 5);
             } catch (err) {
                 console.error("Error fetching patients:", err)
             } finally {
@@ -196,21 +198,21 @@ export default function QueryForm({ onResult } : QueryFormProps) {
                 onChange={setSelectedPatients} 
             />
             {/* <BrainRegionSelector value={selectedRegions} onChange={setSelectedRegions} /> */}
-            {/* <DateTimeRangeSelector
+            <DateTimeRangeSelector
                 fromDateTime={fromDateTime}
                 toDateTime={toDateTime}
                 onFromChange={setFromDateTime}
                 onToChange={setToDateTime}
-            /> */}
-            {/* <DaysOfStaySelector 
-                maxDay={10}
+            />
+            <DaysOfStaySelector 
+                maxDay={maxDay}
                 selectedDays={selectedDaysOfStay} 
                 onChange={setSelectedDaysOfStay} 
-            /> */}
-            {/* <TimeOfWeekSelector 
+            />
+            <TimeOfWeekSelector 
                 selectedSlots={selectedTimesOfWeek} 
                 onChange={setSelectedTimesOfWeek} 
-            /> */}
+            />
             <ModeSelector mode={mode} setMode={setMode} />
             <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0">
                 <button

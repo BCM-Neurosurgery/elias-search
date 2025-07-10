@@ -4,7 +4,8 @@ from django.contrib.auth import login, logout
 from paramiko import SSHClient, AutoAddPolicy
 from datajoint.schemas import VirtualModule
 import json
-from .utils import dj_conn
+import datajoint as dj
+from .utils import dj_conn, parse_time
 from .query import QueryBuilder
 
 @csrf_exempt
@@ -59,10 +60,25 @@ def query_db(request):
 def get_formdata(request):
     conn = dj_conn()
     schemas = VirtualModule(module_name='schemas', schema_name='emu24_stitch', connection=conn)
-    query = schemas.Patient()
-    patient_list = list(query.fetch('emu_id'))
+    pt_ids = schemas.Patient()
+    patient_list = list(pt_ids.fetch('emu_id'))
     query = schemas.TaskIDComments()
     task_list = list(set(query.fetch('task_name')))
-    return JsonResponse({'patients': patient_list, 'tasks': task_list})
+    max_days = 0
+    # get total days per patient to get max days of stay
+    pt_ids = pt_ids.fetch('patient_id')
+    for pt_id in pt_ids:
+        admission_data = schemas.Admission() & f"patient_id = '{pt_id}'"
+        try:
+            admission_date = admission_data.fetch1('admission_date')
+            admission_date = parse_time(admission_date)
+        except Exception as e:
+            print(f"Error fetching admission date for patient {pt_id}: {e}")
+            continue
+        last_recording = (dj.U().aggr(schemas.NSPChunks() & f"patient_id = '{pt_id}'", n='max(absolute_time)').fetch1("n"))
+        last_recording = parse_time(last_recording)
+        days_of_stay = (last_recording - admission_date).days
+        max_days = max(max_days, days_of_stay)
+    return JsonResponse({'patients': patient_list, 'tasks': task_list, 'max_days': max_days})
 
 
