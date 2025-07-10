@@ -40,6 +40,8 @@ def auth_logout(request):
     return JsonResponse({'success': True})
 
 def auth_status(request):
+    # for dev purposes always be authenticated
+    # return JsonResponse({"authenticated": True})
     return JsonResponse({"authenticated": request.session.get("ssh_authenticated", False)})
 
 @csrf_exempt
@@ -78,6 +80,9 @@ def get_formdata(request):
         last_recording = (dj.U().aggr(schemas.NSPChunks() & f"patient_id = '{pt_id}'", n='max(absolute_time)').fetch1("n"))
         last_recording = parse_time(last_recording)
         days_of_stay = (last_recording - admission_date).days
+        # assume any value above 30 is a mistake and do not consider this patient
+        if days_of_stay > 30:
+            days_of_stay = 0
         max_days = max(max_days, days_of_stay)
     return JsonResponse({'patients': patient_list, 'tasks': task_list, 'max_days': max_days})
 

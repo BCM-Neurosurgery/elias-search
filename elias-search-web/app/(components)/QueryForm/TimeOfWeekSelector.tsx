@@ -72,50 +72,73 @@ export default function TimeOfWeekSelector({ selectedSlots, onChange }: TimeOfWe
         onChange([]);
     }
     return (
-    <div className="mb-4 p-4 border rounded">
-        <div className="flex justify-between items-center mb-2">
-            <h3 className="text-md font-bold">Select Time of Week</h3>
-            <div className="space-x-4">
-                <button onClick={handleSelectAll} className="text-sm text-blue-600 underline">Select All</button>
-                <button onClick={handleClearAll} className="text-sm text-blue-600 underline">Clear All</button>
+        <div className="mb-4 p-4 border rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800">
+            <div className="flex justify-between items-center mb-2">
+                <h3 className="text-md font-bold text-gray-800 dark:text-gray-100">Select Time of Week</h3>
+                <div className="space-x-4">
+                    <button
+                        onClick={handleSelectAll}
+                        className="text-sm text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300"
+                    >
+                        Select All
+                    </button>
+                    <button
+                        onClick={handleClearAll}
+                        className="text-sm text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300"
+                    >
+                        Clear All
+                    </button>
+                </div>
             </div>
-        </div>
-
-        <div className="overflow-auto">
-            <div className="grid" style={{ gridTemplateColumns: `80px repeat(7, 1fr)` }}>
-                {/* Day headers */}
-                <div></div>
-                {daysOfWeek.map((day) => (
-                    <div key={day} className="text-center font-semibold border-b pb-1">
-                        {day}
-                    </div>
-                ))}
-
-                {/* Hour rows */}
-                {hours.map((hour) => (
-                    <React.Fragment key={hour}>
-                        <div className="text-right pr-2 text-sm border-r">
-                            {hour === 0 ? "12 AM" : hour < 12 ? `${hour} AM` : hour === 12 ? "12 PM" : `${hour - 12} PM`}
+    
+            <div className="overflow-auto">
+                <div className="grid" style={{ gridTemplateColumns: `80px repeat(7, 1fr)` }}>
+                    {/* Day headers */}
+                    <div></div>
+                    {daysOfWeek.map((day) => (
+                        <div
+                            key={day}
+                            className="text-center font-semibold border-b pb-1 text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                        >
+                            {day}
                         </div>
-
-                        {daysOfWeek.map((day) => {
-                            const selected = isSelected(day, hour);
-                            return (
-                                <div
-                                    key={`${day}-${hour}`}
-                                    onMouseDown={() => handleMouseDown(day, hour)}
-                                    onMouseEnter={() => handleMouseEnter(day, hour)}
-                                    className={`w-full h-8 border border-gray-300 cursor-pointer ${
-                                        selected ? "bg-blue-600" : "bg-white"
-                                    }`}
-                                />
-                            );
-                        })}
-                    </React.Fragment>
-
-                ))}
+                    ))}
+    
+                    {/* Hour rows */}
+                    {hours.map((hour) => (
+                        <React.Fragment key={hour}>
+                            <div className="text-right pr-2 text-sm border-r text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600">
+                                {hour === 0
+                                    ? "12 AM"
+                                    : hour < 12
+                                    ? `${hour} AM`
+                                    : hour === 12
+                                    ? "12 PM"
+                                    : `${hour - 12} PM`}
+                            </div>
+    
+                            {daysOfWeek.map((day) => {
+                                const selected = isSelected(day, hour);
+                                return (
+                                    <div
+                                        key={`${day}-${hour}`}
+                                        onMouseDown={() => handleMouseDown(day, hour)}
+                                        onMouseEnter={() => handleMouseEnter(day, hour)}
+                                        className={`w-full h-8 border cursor-pointer
+                                            ${
+                                                selected
+                                                    ? "bg-blue-600"
+                                                    : "bg-white dark:bg-gray-700"
+                                            }
+                                            border-gray-300 dark:border-gray-600
+                                        `}
+                                    />
+                                );
+                            })}
+                        </React.Fragment>
+                    ))}
+                </div>
             </div>
         </div>
-    </div>
-    );
+    );    
 }

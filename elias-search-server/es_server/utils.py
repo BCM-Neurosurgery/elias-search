@@ -30,7 +30,7 @@ def dj_conn():
     return dj.conn(reset=True)
 
 def parse_time(s):
-    for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+    for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d", "%m-%d-%Y"):
         try:
             return datetime.strptime(s, fmt)
         except ValueError:

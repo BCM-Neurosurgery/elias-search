@@ -25,39 +25,10 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.react-select__control {
-  background-color: white;
-  color: black;
+@media (prefers-color-scheme: dark) {
+  .my-react-select { --background: black, --color: gray }
 }
 
-.dark .react-select__control {
-  background-color: #1f2937; /* gray-800 */
-  color: white;
+@media (prefers-color-scheme: light) {
+  .my-react-select { --background: white, --color: darkgray }
 }
-
-.react-select__menu {
-  background-color: white;
-}
-
-.dark .react-select__menu {
-  background-color: #1f2937;
-}
-
-.dark .react-select__multi-value {
-  background-color: #374151; /* gray-700 */
-  color: white;
-}
-
-.dark .react-select__multi-value__label {
-  color: white;
-}
-
-.dark .react-select__multi-value__remove {
-  color: #9ca3af; /* gray-400 */
-}
-
-.dark .react-select__multi-value__remove:hover {
-  background-color: #4b5563; /* slightly lighter gray */
-  color: white;
-}
-
