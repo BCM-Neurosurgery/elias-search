@@ -6,7 +6,7 @@ services:
       context: ./elias-search-web
       dockerfile: Dockerfile.dev
     ports:
-      - "3000:3000"
+      - "3001:3001"
     environment:
       NEXT_PUBLIC_BACKEND_URL: ${BACKEND_URL}
       NEXT_PUBLIC_WEBSOCKET_URL: ${WEBSOCKET_URL}
@@ -16,7 +16,7 @@ services:
     build: 
       context: ./elias-search-server
     ports:
-      - "8080:8080"
+      - "8081:8081"
     environment:
       DJ_USER: ${DJ_USER}
       DJ_PASSWORD: ${DJ_PASSWORD}
