@@ -273,10 +273,20 @@ class QueryBuilder:
         # get current patient ids
         pt_ids = list(set(self.table.fetch('patient_id')))
         for pt_id in pt_ids:
-            # get admission start
-            admission_data = self.schemas.Admission() & f"patient_id = '{pt_id}'"
-            admission_start = admission_data.fetch1('admission_date')
-            admission_start = parse_time(admission_start).replace(hour=0, minute=0, second=0, microsecond=0)
+            try:
+                # get admission start
+                admission_data = self.schemas.Admission() & f"patient_id = '{pt_id}'"
+                admission_start = admission_data.fetch1('admission_date')
+                admission_start = parse_time(admission_start).replace(hour=0, minute=0, second=0, microsecond=0)
+                min_ts_str = (dj.U().aggr(self.schemas.NSPChunks() & f"patient_id = '{pt_id}'", n='min(absolute_time)').fetch1("n"))
+                min_ts = parse_time(min_ts_str)
+                if min_ts - admission_start < timedelta(seconds=0) or min_ts - admission_start > timedelta(hours=48):
+                    raise ValueError("first chunk is not within 48 hours of admission start - somethign is wrong with this recording")
+            except Exception as e:
+                print(f"Error fetching admission date for patient {pt_id}: {e} - including all data for this patient")
+                filter = f"(patient_id = '{pt_id}')"
+                filters.append(filter)
+                continue
 
             # loop through day list
             for day_delta in self.data["selectedDaysOfStay"]:
@@ -300,8 +310,12 @@ class QueryBuilder:
         min_ts_str = (dj.U().aggr(self.table, n='min(absolute_time)').fetch1("n"))
         max_ts_str = (dj.U().aggr(self.table, n='max(absolute_time)').fetch1("n"))
 
-        min_dt = parse_time(min_ts_str)
-        max_dt = parse_time(max_ts_str)
+        try:
+            min_dt = parse_time(min_ts_str)
+            max_dt = parse_time(max_ts_str)
+        except Exception as e:
+            print("No more entries found - query will end")
+            return self.table
 
         # use python week
         day_to_index = {
@@ -422,6 +436,12 @@ class QueryBuilder:
                 admission_data = self.schemas.Admission() & f"patient_id = '{pt_id}'"
                 admission_start = admission_data.fetch1('admission_date')
                 admission_start = parse_time(admission_start).replace(hour=0, minute=0, second=0, microsecond=0)
+                # also ensure admission date is within 48 hours before first recording... or else theres a problem
+                # and we should ignore this query 
+                min_ts_str = (dj.U().aggr(self.schemas.NSPChunks() & f"patient_id = '{pt_id}'", n='min(absolute_time)').fetch1("n"))
+                min_ts = parse_time(min_ts_str)
+                if min_ts - admission_start < timedelta(seconds=0) or min_ts - admission_start > timedelta(hours=48):
+                    raise ValueError("first chunk is not within 48 hours of admission start - somethign is wrong with this recording")
             except Exception as e:
                 print(f"Error fetching admission date for patient {pt_id}: {e} - including all data for this patient")
                 filter = f"(patient_id = '{pt_id}')"
@@ -462,8 +482,12 @@ class QueryBuilder:
         min_ts_str = (dj.U().aggr(joint_table, n='min(start_absolute_time)').fetch1("n"))
         max_ts_str = (dj.U().aggr(joint_table, n='max(start_absolute_time)').fetch1("n"))
 
-        min_dt = parse_time(min_ts_str)
-        max_dt = parse_time(max_ts_str)
+        try:
+            min_dt = parse_time(min_ts_str)
+            max_dt = parse_time(max_ts_str)
+        except Exception as e:
+            print("No more entries found - query will end")
+            return self.table
 
         # use python week
         day_to_index = {
