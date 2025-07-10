@@ -84,6 +84,7 @@ class QueryBuilder:
                     row = (self.table & key).fetch1()
                 except Exception as e:
                     print(f"fetch failed for row {i} and key {key}")
+                    continue
                 patient_emu_id = (self.schemas.Patient() & f"patient_id = '{row['patient_id']}'").fetch1('emu_id')
                 res_patient = patient_emu_id
                 formatted_time = parse_time(row['absolute_time']).strftime("'%Y-%m-%d %H:%M:%S'")
@@ -136,6 +137,7 @@ class QueryBuilder:
                     row = (self.table & key).fetch1()
                 except Exception as e:
                     print(f"fetch failed for row {i} and key {key}")
+                    continue
                 patient_emu_id = (self.schemas.Patient() & f"patient_id = '{row['patient_id']}'").fetch1('emu_id')
                 # set available res
                 res_patient = patient_emu_id

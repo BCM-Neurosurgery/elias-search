@@ -28,7 +28,7 @@ services:
       - ${STITCHED_PATH}:/mnt/stitched/EMU-18112:ro
       - ./elias-search-server/dj_log.log:/mnt/lake-database/stitched-logs/datajoint_computed_table.log
     command: >
-      sh -c "python manage.py migrate && daphne -b 0.0.0.0 -p 8080 es_server.asgi:application"
+      sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8080"
     restart: unless-stopped
   
 
