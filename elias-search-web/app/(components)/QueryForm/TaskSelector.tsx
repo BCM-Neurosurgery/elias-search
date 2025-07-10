@@ -1,6 +1,7 @@
 "use client"
 import { useEffect } from "react";
-import Select, { type MultiValue } from "react-select";
+import Select, { type MultiValue, StylesConfig } from "react-select";
+import { useTheme } from 'next-themes';
 
 interface OptionType {
   value: string;
@@ -46,6 +47,62 @@ export default function TaskSelector({
     }
   }, [allTasks, excludeStim, setExcludeStim]);
 
+  const { resolvedTheme } = useTheme(); // will be 'dark' or 'light'
+
+  const isDark = resolvedTheme === 'dark';
+
+  const selectStyles: StylesConfig<OptionType, true> = {
+    control: (base, state) => ({
+      ...base,
+      backgroundColor: isDark ? '#1f2937' : '#ffffff', // gray-800 or white
+      borderColor: state.isFocused
+        ? isDark ? '#3b82f6' : '#60a5fa' // blue-500/400
+        : isDark ? '#4b5563' : '#d1d5db', // gray-600 or gray-300
+      color: isDark ? '#ffffff' : '#111827',
+      boxShadow: state.isFocused
+        ? isDark
+          ? '0 0 0 2px #3b82f6'
+          : '0 0 0 2px #60a5fa'
+        : 'none',
+      '&:hover': {
+        borderColor: isDark ? '#6b7280' : '#9ca3af', // gray-500/400
+      },
+    }),
+    menu: (base) => ({
+      ...base,
+      backgroundColor: isDark ? '#1f2937' : '#ffffff',
+      color: isDark ? '#ffffff' : '#111827',
+    }),
+    option: (base, state) => ({
+      ...base,
+      backgroundColor: state.isSelected
+        ? isDark ? '#2563eb' : '#3b82f6' // blue-600/500
+        : state.isFocused
+        ? isDark ? '#374151' : '#f3f4f6' // gray-700 or gray-100
+        : isDark ? '#1f2937' : '#ffffff',
+      color: state.isSelected
+        ? '#ffffff'
+        : isDark ? '#d1d5db' : '#111827',
+      cursor: 'pointer',
+    }),
+    multiValue: (base) => ({
+      ...base,
+      backgroundColor: isDark ? '#374151' : '#e5e7eb', // gray-700 or gray-200
+    }),
+    multiValueLabel: (base) => ({
+      ...base,
+      color: isDark ? '#f9fafb' : '#111827', // gray-50 or gray-900
+    }),
+    multiValueRemove: (base) => ({
+      ...base,
+      color: isDark ? '#9ca3af' : '#4b5563',
+      ':hover': {
+        backgroundColor: isDark ? '#4b5563' : '#d1d5db',
+        color: isDark ? '#ffffff' : '#111827',
+      },
+    }),
+  };
+
   return (
     <div className="mb-4 p-4 border rounded bg-white dark:bg-gray-800 dark:border-gray-700">
       <h3 className="text-md font-bold mb-2 text-gray-900 dark:text-gray-100">Select Tasks</h3>
@@ -89,7 +146,7 @@ export default function TaskSelector({
           onChange={handleSelectChange}
           placeholder="Type to include tasks"
           className="w-full"
-          classNamePrefix="react-select"
+          styles={selectStyles}
         />
       </div>
     </div>

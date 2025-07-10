@@ -10,6 +10,10 @@ import os
 SAMPLING_RATE = 30_000
 DATALAKE_PATH = os.environ.get('DATALAKE_PATH', "/mnt/datalake/data/emu")
 STITCHED_PATH = os.environ.get('STITCHED_PATH', "/mnt/stitched/EMU-18112")
+
+# define class to get absolute start timestamp of stitchedchunk
+
+
 class QueryBuilder:
     def __init__(self, data, session_id=None):
         self.data = data
@@ -36,19 +40,25 @@ class QueryBuilder:
     def waterfall_query(self):
         if self.data["mode"] == "datalake":
             # run all steps of query
-            # self._timerange_query_dl()
+            self.send_status("filtering dates")
+            self._timerange_query_dl()
             self.send_status("filtering patients")
             self._patient_query()
             self.send_status("filtering tasks")
             self._task_query_dl()
-            # self._stay_day_query()
-            # self._weektime_query()
+            self.send_status("filtering stay days")
+            self._stay_day_query_dl()
+            self.send_status("filtering week times")
+            self._weektime_query_dl()
         else:
-            # self._timerange_query_s()
+            self.send_status("filtering dates")
+            self._timerange_query_s()
             self.send_status("filtering patients")
             self._patient_query()
-            # self._stay_day_query_s()
-            # self._weektime_query_s()
+            self.send_status("filtering stay days")
+            self._stay_day_query_s()
+            self.send_status("filtering week times")
+            self._weektime_query_s()
             self.send_status("filtering tasks")
             self._task_query_s()
         return self.table
@@ -67,8 +77,13 @@ class QueryBuilder:
         }
 
         total = len(self.table)
+        keys = self.table.proj()
         if self.data["mode"] == "datalake":
-            for i, row in enumerate(self.table):
+            for i, key in enumerate(keys):
+                try:
+                    row = (self.table & key).fetch1()
+                except Exception as e:
+                    print(f"fetch failed for row {i} and key {key}")
                 patient_emu_id = (self.schemas.Patient() & f"patient_id = '{row['patient_id']}'").fetch1('emu_id')
                 res_patient = patient_emu_id
                 formatted_time = parse_time(row['absolute_time']).strftime("'%Y-%m-%d %H:%M:%S'")
@@ -115,7 +130,12 @@ class QueryBuilder:
                 if i % 20 == 0:
                     self.send_status(f"Processed {i}/{total} rows")
         else:
-            for i, row in enumerate(self.table):
+            for i, key in enumerate(keys):
+                # get and fetch row
+                try:
+                    row = (self.table & key).fetch1()
+                except Exception as e:
+                    print(f"fetch failed for row {i} and key {key}")
                 patient_emu_id = (self.schemas.Patient() & f"patient_id = '{row['patient_id']}'").fetch1('emu_id')
                 # set available res
                 res_patient = patient_emu_id
@@ -246,12 +266,14 @@ class QueryBuilder:
         return self.table
 
     def _stay_day_query_dl(self):
-        stay_filtered_query = self.schemas.NSPChunks() & '0=1'
+        # set filters list
+        filters = []
         # get current patient ids
         pt_ids = list(set(self.table.fetch('patient_id')))
         for pt_id in pt_ids:
             # get admission start
-            admission_start = self.schemas.Admission() & f"patient_id = '{pt_id}'"
+            admission_data = self.schemas.Admission() & f"patient_id = '{pt_id}'"
+            admission_start = admission_data.fetch1('admission_date')
             admission_start = parse_time(admission_start).replace(hour=0, minute=0, second=0, microsecond=0)
 
             # loop through day list
@@ -259,14 +281,16 @@ class QueryBuilder:
                 day_start = admission_start + timedelta(days=day_delta-1)
                 day_end = day_start + timedelta(days=1)
                 # add to query
-                subquery = self.table & f"patient_id = '{pt_id}' AND absolute_time >= '{day_start}' AND absolute_time < '{day_end}'"
-                stay_filtered_query = stay_filtered_query + subquery
+                filter = f"(patient_id = '{pt_id}' AND absolute_time >= '{day_start}' AND absolute_time < '{day_end}')"
+                filters.append(filter)
+            
 
-        self.table = stay_filtered_query
+        filter = " OR ".join(filters)
+        self.table = self.table & filter
         return self.table
 
     def _weektime_query_dl(self):
-         # just return query as is if we have the maximal set
+        # just return query as is if we have the maximal set
         if self.data["selectedTimesOfWeek"] and len(self.data["selectedTimesOfWeek"]) == 7 * 24:
             return self.table
     
@@ -308,15 +332,10 @@ class QueryBuilder:
         for start, end in valid_ranges:
             start_str = start.strftime("%Y-%m-%d %H:%M:%S.%f")
             end_str = end.strftime("%Y-%m-%d %H:%M:%S.%f")
-            filters.append(f'absolute_time >= "{start_str}" AND absolute_time < "{end_str}"')
+            filters.append(f'(absolute_time >= "{start_str}" AND absolute_time < "{end_str}")')
             
-        # now build up query for all viable time ranges
-        time_filtered_query = None
-        for f in filters:
-            subquery = self.table & f
-            time_filtered_query = subquery if time_filtered_query is None else(time_filtered_query + subquery)
-
-        self.table = time_filtered_query
+        filter = " OR ".join(filters)
+        self.table = self.table & filter
         return self.table
 
     def _task_query_s(self):
@@ -346,6 +365,143 @@ class QueryBuilder:
 
         filter = " OR ".join(filters)
         self.table = self.table & filter
+        return self.table
+    
+    def _timerange_query_s(self):
+        # get our time range!!
+        if self.data["fromDateTime"]:
+            from_time = datetime.fromisoformat(self.data["fromDateTime"])
+        else:
+            from_time = datetime(MINYEAR, 1, 1)
+
+        if self.data["toDateTime"]:
+            to_time = datetime.fromisoformat(self.data["toDateTime"])
+        else:
+            to_time = datetime(MAXYEAR, 1, 1)
+        
+        # format for datajoint
+        from_time = from_time.strftime("%Y-%m-%d %H:%M:%S.%f")
+        to_time = to_time.strftime("%Y-%m-%d %H:%M:%S.%f")
+        
+        # now create table to filter from
+        start_chunks = self.schemas.NSPChunks.proj(
+            start_chunk='chunk_id', 
+            start_absolute_time='absolute_time',
+            )
+        
+        joint_table = (self.table * start_chunks)
+
+        # now filter by time
+        joint_table = joint_table & f'start_absolute_time >= "{from_time}"'
+        joint_table = joint_table & f'start_absolute_time <= "{to_time}"'
+        
+        # get keys and filter original table
+        filtered_keys = joint_table.proj()
+        self.table = self.table & filtered_keys
+        return self.table
+    
+    def _stay_day_query_s(self):
+        # set filters list
+        filters = []
+        # get current patient ids
+        pt_ids = list(set(self.table.fetch('patient_id')))
+        
+        # now create table to filter from
+        start_chunks = self.schemas.NSPChunks.proj(
+            start_chunk='chunk_id', 
+            start_absolute_time='absolute_time',
+            )
+        
+        joint_table = (self.table * start_chunks)
+        
+        for pt_id in pt_ids:
+            try:
+                # get admission start
+                admission_data = self.schemas.Admission() & f"patient_id = '{pt_id}'"
+                admission_start = admission_data.fetch1('admission_date')
+                admission_start = parse_time(admission_start).replace(hour=0, minute=0, second=0, microsecond=0)
+            except Exception as e:
+                print(f"Error fetching admission date for patient {pt_id}: {e} - including all data for this patient")
+                filter = f"(patient_id = '{pt_id}')"
+                filters.append(filter)
+                continue
+
+            # loop through day list
+            for day_delta in self.data["selectedDaysOfStay"]:
+                day_start = admission_start + timedelta(days=day_delta-1)
+                day_end = day_start + timedelta(days=1)
+                # add to query
+                filter = f"(patient_id = '{pt_id}' AND start_absolute_time >= '{day_start}' AND start_absolute_time < '{day_end}')"
+                filters.append(filter)
+            
+
+        filter = " OR ".join(filters)
+        joint_table = joint_table & filter
+        
+        # get keys and filter original table
+        filtered_keys = joint_table.proj()
+        self.table = self.table & filtered_keys
+        return self.table
+    
+    def _weektime_query_s(self):
+        # just return query as is if we have the maximal set
+        if self.data["selectedTimesOfWeek"] and len(self.data["selectedTimesOfWeek"]) == 7 * 24:
+            return self.table
+        
+        # now create table to filter from
+        start_chunks = self.schemas.NSPChunks.proj(
+            start_chunk='chunk_id', 
+            start_absolute_time='absolute_time',
+            )
+        
+        joint_table = (self.table * start_chunks)
+    
+        # get current min and max time
+        min_ts_str = (dj.U().aggr(joint_table, n='min(start_absolute_time)').fetch1("n"))
+        max_ts_str = (dj.U().aggr(joint_table, n='max(start_absolute_time)').fetch1("n"))
+
+        min_dt = parse_time(min_ts_str)
+        max_dt = parse_time(max_ts_str)
+
+        # use python week
+        day_to_index = {
+        "Sunday": 6, "Monday": 0, "Tuesday": 1, "Wednesday": 2,
+        "Thursday": 3, "Friday": 4, "Saturday": 5
+        }   
+        # generate slot set for our time range
+        if self.data["selectedTimesOfWeek"]:
+            time_of_week = self.data["selectedTimesOfWeek"]
+            slot_set = set((day_to_index[s["day"]], s["hour"]) for s in time_of_week)
+        else:
+            slot_set = set()
+        
+        # get valid datetime ranges
+        current = min_dt.replace(minute=0, second=0, microsecond=0)
+        valid_ranges = []
+
+        while current <= max_dt:
+            weekday = current.weekday()
+            hour = current.hour
+
+            if (weekday, hour) in slot_set:
+                start = current
+                end = current + timedelta(hours=1)
+                valid_ranges.append((start, end))
+            current += timedelta(hours=1)
+        
+        # convert valid ranges to readable filters for dj
+        filters = []
+        for start, end in valid_ranges:
+            start_str = start.strftime("%Y-%m-%d %H:%M:%S.%f")
+            end_str = end.strftime("%Y-%m-%d %H:%M:%S.%f")
+            filters.append(f'(start_absolute_time >= "{start_str}" AND start_absolute_time < "{end_str}")')
+            
+        filter = " OR ".join(filters)
+        joint_table = joint_table & filter
+        
+        # get keys and filter original table
+        filtered_keys = joint_table.proj()
+        self.table = self.table & filtered_keys
         return self.table
     
 

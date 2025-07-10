@@ -11,6 +11,7 @@ export default function LoginPage() {
      useEffect(() => {
          (async () => {
             try {
+                console.log(process.env.NEXT_PUBLIC_BACKEND_URL);
                 const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/status/`, 
                 {
                     credentials: "include",

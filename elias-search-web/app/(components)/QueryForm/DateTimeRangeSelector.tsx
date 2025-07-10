@@ -44,18 +44,23 @@ export default function DateTimeRangeSelector({
     }, [fromDateTime, toDateTime]);
 
     return (
-        <div className="mb-4 p-4 border rounded">
-            <h3 className="text-md font-bold mb-2">Select Date Range</h3>
-
-            <div className="flex flex-col space-y-2">
+        <div className="mb-4 p-4 border rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800">
+            <h3 className="text-md font-bold mb-2 text-gray-800 dark:text-gray-100">Select Date Range</h3>
+    
+            <div className="flex flex-col space-y-4">
                 {/* FROM */}
                 <div>
-                    <label className="text-sm font-medium flex justify-between items-center">
-                        <span>From: <span className="font-normal text-gray-600">{formatReadableDate(fromDateTime)}</span></span>
+                    <label className="text-sm font-medium flex justify-between items-center text-gray-800 dark:text-gray-100">
+                        <span>
+                            From:{" "}
+                            <span className="font-normal text-gray-600 dark:text-gray-300">
+                                {formatReadableDate(fromDateTime)}
+                            </span>
+                        </span>
                         {fromDateTime && (
                             <button
                                 type="button"
-                                className="text-sm text-blue-600 underline"
+                                className="text-sm text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300"
                                 onClick={() => onFromChange(null)}
                             >
                                 Clear
@@ -65,20 +70,26 @@ export default function DateTimeRangeSelector({
                     <input
                         type="datetime-local"
                         value={fromDateTime || ""}
-                        onChange={(e) => {
+                        onChange={(e) =>
                             onFromChange(e.target.value ? e.target.value : null)
-                        }}
-                        className="border p-2 rounded"
+                        }
+                        className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                     />
                 </div>
+    
                 {/* TO */}
                 <div>
-                    <label className="text-sm font-medium flex justify-between items-center">
-                        <span>To: <span className="font-normal text-gray-600">{formatReadableDate(toDateTime)}</span></span>
+                    <label className="text-sm font-medium flex justify-between items-center text-gray-800 dark:text-gray-100">
+                        <span>
+                            To:{" "}
+                            <span className="font-normal text-gray-600 dark:text-gray-300">
+                                {formatReadableDate(toDateTime)}
+                            </span>
+                        </span>
                         {toDateTime && (
                             <button
                                 type="button"
-                                className="text-sm text-blue-600 underline"
+                                className="text-sm text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300"
                                 onClick={() => onToChange(null)}
                             >
                                 Clear
@@ -88,14 +99,18 @@ export default function DateTimeRangeSelector({
                     <input
                         type="datetime-local"
                         value={toDateTime || ""}
-                        onChange={(e) => {
+                        onChange={(e) =>
                             onToChange(e.target.value ? e.target.value : null)
-                        }}
-                        className="border p-2 rounded"
+                        }
+                        className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                     />
                 </div>
             </div>
-            {error && <div className="text-red-600 mt-2">{error}</div>}
+    
+            {error && (
+                <div className="text-red-600 dark:text-red-400 mt-2">{error}</div>
+            )}
         </div>
     );
+    
 }
