@@ -27,4 +27,4 @@ COPY . .
 
 RUN python manage.py migrate
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8080"]
+CMD ["daphne", "-b", "0.0.0.0", "-p", "8080", "es_server.asgi:application"]
