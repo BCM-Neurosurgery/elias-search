@@ -1,5 +1,7 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
+from code import InteractiveConsole
+import io, sys
 
 class QueryProgressConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -14,3 +16,23 @@ class QueryProgressConsumer(AsyncWebsocketConsumer):
 
     async def send_progress(self, event):
         await self.send(text_data=json.dumps(event["message"]))
+        
+        
+class DjangoShellConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        if not self.scope["user"].is_superuser:
+            await self.close()
+            return
+        self.console = InteractiveConsole()
+        await self.accept()
+    
+    async def receive(self, text_data):
+        buffer = io.StringIO()
+        sys.stdout = buffer
+        sys.stderr = buffer
+        try:
+            self.console.push(text_data)
+        finally:
+            sys.stdout = sys.__stdout__
+            sys.stderr = sys.__stderr__
+        await self.send(buffer.getvalue())
