@@ -77,7 +77,7 @@ class NEVChunks(models.Model):
 
     nev_file = models.ForeignKey(
         ExtChunk,
-        to_field='hash_'.
+        to_field='hash_',
         db_column='nev_file',
         on_delete=models.SET_NULL,
         related_name='nev_chunks'
@@ -101,7 +101,7 @@ class NS3Chunks(models.Model):
 
     ns3_file = models.ForeignKey(
         ExtChunk,
-        to_field='hash_'.
+        to_field='hash_',
         db_column='ns3_file',
         on_delete=models.SET_NULL,
         related_name='ns3_chunks'
@@ -123,7 +123,7 @@ class NS5Chunks(models.Model):
     
     ns5_file = models.ForeignKey(
         ExtChunk,
-        to_field='hash_'.
+        to_field='hash_',
         db_column='ns5_file',
         on_delete=models.SET_NULL,
         related_name='ns5_chunks'
@@ -148,7 +148,7 @@ class NSPChunks(models.Model):
 
     nev_file = models.ForeignKey(
         ExtChunk,
-        to_field='hash_'.
+        to_field='hash_',
         db_column='nev_file',
         on_delete=models.SET_NULL,
         null=True,
@@ -157,7 +157,7 @@ class NSPChunks(models.Model):
 
     ns5_file = models.ForeignKey(
         ExtChunk,
-        to_field='hash_'.
+        to_field='hash_',
         db_column='ns5_file',
         on_delete=models.SET_NULL,
         null=True,
@@ -166,7 +166,7 @@ class NSPChunks(models.Model):
 
     ns3_file = models.ForeignKey(
         ExtChunk,
-        to_field='hash_'.
+        to_field='hash_',
         db_column='ns3_file',
         on_delete=models.SET_NULL,
         null=True,
@@ -266,7 +266,7 @@ class StitchedChunks(models.Model):
 
     nev_file = models.ForeignKey(
         ExtStitched,
-        to_field='hash_'.
+        to_field='hash_',
         db_column='nev_file',
         on_delete=models.SET_NULL,
         related_name='nev_stitched'
@@ -274,7 +274,7 @@ class StitchedChunks(models.Model):
 
     ns5_file = models.ForeignKey(
         ExtStitched,
-        to_field='hash_'.
+        to_field='hash_',
         db_column='ns5_file',
         on_delete=models.SET_NULL,
         null=True,
@@ -283,7 +283,7 @@ class StitchedChunks(models.Model):
 
     ns3_file = models.ForeignKey(
         ExtStitched,
-        to_field='hash_'.
+        to_field='hash_',
         db_column='ns3_file',
         on_delete=models.SET_NULL,
         null=True,

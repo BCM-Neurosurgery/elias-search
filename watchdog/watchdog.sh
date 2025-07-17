@@ -7,7 +7,7 @@ echo "[watchdog] Starting health check loop..."
 while true; do
     if ! curl -fs "$TARGET_URL" > /dev/null; then
         echo "[watchdog] Health check failed. Restarting django server..."
-        docker restart server
+        docker compose restart server
     else
         echo "[watchdog] django server is healthy."
     fi

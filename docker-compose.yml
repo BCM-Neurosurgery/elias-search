@@ -40,6 +40,7 @@ services:
       TARGET_URL: 'http://server:8080/ping/'
       CHECK_INTERVAL: '60'
     volumes:
+      - ./docker-compose-dev.yml:/app/docker-compose.yml
       - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
   

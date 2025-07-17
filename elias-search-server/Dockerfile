@@ -5,12 +5,15 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Install system dependencies
+# Install system dependencies (including MySQL client headers)
 RUN apt-get update && \
-    apt-get install -y build-essential \
+    apt-get install -y \
+    build-essential \
     git \
     libpq-dev \
+    default-libmysqlclient-dev \
     curl \
+    pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 # Add GitHub.com to known_hosts to avoid SSH prompt
