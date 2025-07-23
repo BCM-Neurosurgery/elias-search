@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
+import os
 from pathlib import Path
 from corsheaders.defaults import default_headers
 import pymysql
@@ -175,11 +175,12 @@ CHANNEL_LAYERS = {
 }
 
 # settings.py
+db_config_path = str(BASE_DIR / "es_server/my.cnf") if os.environ.get("ENVIRONMENT", "prod") else str(BASE_DIR / "es_server/my.cnf.dev")
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
         "OPTIONS": {
-            "read_default_file": str(BASE_DIR / "es_server/my.cnf"),
+            "read_default_file": db_config_path,
         },
     }
 }
