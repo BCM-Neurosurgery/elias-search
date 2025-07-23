@@ -2,7 +2,7 @@ from django.db import models
 
 # define external models
 class ExtChunk(models.Model):
-    hash_ = models.BinaryField(max_length=16, primary_key=True)
+    hash = models.BinaryField(max_length=16, primary_key=True)
     size = models.BigIntegerField()
     attachment_name = models.CharField(max_length=255, null=True)
     filepath = models.CharField(max_length=1000, null=True)
@@ -14,7 +14,7 @@ class ExtChunk(models.Model):
         managed = False
 
 class ExtStitched(models.Model):
-    hash_ = models.BinaryField(max_length=16, primary_key=True)
+    hash = models.BinaryField(max_length=16, primary_key=True)
     size = models.BigIntegerField()
     attachment_name = models.CharField(max_length=255, null=True)
     filepath = models.CharField(max_length=1000, null=True)
@@ -77,9 +77,9 @@ class NEVChunks(models.Model):
 
     nev_file = models.ForeignKey(
         ExtChunk,
-        to_field='hash_',
+        to_field='hash',
         db_column='nev_file',
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         related_name='nev_chunks'
     )
 
@@ -101,9 +101,9 @@ class NS3Chunks(models.Model):
 
     ns3_file = models.ForeignKey(
         ExtChunk,
-        to_field='hash_',
+        to_field='hash',
         db_column='ns3_file',
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         related_name='ns3_chunks'
     )
 
@@ -123,9 +123,9 @@ class NS5Chunks(models.Model):
     
     ns5_file = models.ForeignKey(
         ExtChunk,
-        to_field='hash_',
+        to_field='hash',
         db_column='ns5_file',
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         related_name='ns5_chunks'
     )
 
@@ -148,29 +148,29 @@ class NSPChunks(models.Model):
 
     nev_file = models.ForeignKey(
         ExtChunk,
-        to_field='hash_',
+        to_field='hash',
         db_column='nev_file',
         on_delete=models.SET_NULL,
         null=True,
-        related_name='nev_chunks'
+        related_name='nev_chunks_nsp'
     )
 
     ns5_file = models.ForeignKey(
         ExtChunk,
-        to_field='hash_',
+        to_field='hash',
         db_column='ns5_file',
         on_delete=models.SET_NULL,
         null=True,
-        related_name='ns5_chunks'
+        related_name='ns5_chunks_nsp'
     )
 
     ns3_file = models.ForeignKey(
         ExtChunk,
-        to_field='hash_',
+        to_field='hash',
         db_column='ns3_file',
         on_delete=models.SET_NULL,
         null=True,
-        related_name='ns3_chunks'
+        related_name='ns3_chunks_nsp'
     )
 
     class Meta:
@@ -191,7 +191,7 @@ class TaskComments(models.Model):
 
     comment = models.CharField(max_length=256)
     timestamp = models.BigIntegerField()
-    type_ = models.CharField(max_length=256)
+    type = models.CharField(max_length=256)
 
     class Meta:
         db_table = '__task_comments'
@@ -266,15 +266,15 @@ class StitchedChunks(models.Model):
 
     nev_file = models.ForeignKey(
         ExtStitched,
-        to_field='hash_',
+        to_field='hash',
         db_column='nev_file',
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         related_name='nev_stitched'
     )
 
     ns5_file = models.ForeignKey(
         ExtStitched,
-        to_field='hash_',
+        to_field='hash',
         db_column='ns5_file',
         on_delete=models.SET_NULL,
         null=True,
@@ -283,7 +283,7 @@ class StitchedChunks(models.Model):
 
     ns3_file = models.ForeignKey(
         ExtStitched,
-        to_field='hash_',
+        to_field='hash',
         db_column='ns3_file',
         on_delete=models.SET_NULL,
         null=True,

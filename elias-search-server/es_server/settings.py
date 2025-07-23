@@ -175,7 +175,7 @@ CHANNEL_LAYERS = {
 }
 
 # settings.py
-db_config_path = str(BASE_DIR / "es_server/my.cnf") if os.environ.get("ENVIRONMENT", "prod") else str(BASE_DIR / "es_server/my.cnf.dev")
+db_config_path = str(BASE_DIR / "es_server/my.cnf") if os.environ.get("ENVIRONMENT", "development") == "prod" else str(BASE_DIR / "es_server/my.cnf.dev")
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
@@ -184,3 +184,4 @@ DATABASES = {
         },
     }
 }
+
