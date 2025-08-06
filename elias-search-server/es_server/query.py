@@ -12,8 +12,6 @@ DATALAKE_PATH = os.environ.get('DATALAKE_PATH', "/mnt/datalake/data/emu")
 STITCHED_PATH = os.environ.get('STITCHED_PATH', "/mnt/stitched/EMU-18112")
 
 # define class to get absolute start timestamp of stitchedchunk
-
-
 class QueryBuilder:
     def __init__(self, data, session_id=None):
         self.data = data

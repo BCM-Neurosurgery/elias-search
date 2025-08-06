@@ -37,7 +37,7 @@ class Patient(models.Model):
 
 
 class Admission(models.Model):
-    patient_id = models.IntegerField()
+    patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='patient_id')
     admission_id = models.IntegerField()
     admission_date = models.CharField(max_length=256)
 
@@ -47,6 +47,15 @@ class Admission(models.Model):
         unique_together = (
             'patient_id', 'admission_id'
         )
+        
+    def delete(self, *args, **kwargs):
+        # manually delete dependent TOCInstances
+        TOCInstance.objects.filter(
+            patient_id=self.patient_id,
+            admission_id=self.admission_id
+        ).delete()
+
+        super().delete(*args, **kwargs)
 
 class Probes(models.Model):
     pass
@@ -66,6 +75,27 @@ class TOCInstance(models.Model):
         unique_together = (
             'patient_id', 'admission_id', 'toc_id'
         )
+    
+    def delete(self, *args, **kwargs):
+            # manually delete dependent NEVChunks, NS3Chunks, NS5Chunks
+            NEVChunks.objects.filter(
+                patient_id=self.patient_id,
+                admission_id=self.admission_id,
+                toc_id=self.toc_id
+            ).delete()
+            NS3Chunks.objects.filter(
+                patient_id=self.patient_id,
+                admission_id=self.admission_id,
+                toc_id=self.toc_id
+            ).delete()
+            NS5Chunks.objects.filter(
+                patient_id=self.patient_id,
+                admission_id=self.admission_id,
+                toc_id=self.toc_id
+            ).delete()
+
+            super().delete(*args, **kwargs)
+
 
 
 class NEVChunks(models.Model):
@@ -89,6 +119,18 @@ class NEVChunks(models.Model):
         unique_together = (
             'patient_id', 'admission_id', 'toc_id', 'chunk_id', 'nsp_id'
         )
+        
+    def delete(self, *args, **kwargs):
+        # manually delete dependent NSPChunks
+        NSPChunks.objects.filter(
+            patient_id=self.patient_id,
+            admission_id=self.admission_id,
+            toc_id=self.toc_id,
+            chunk_id=self.chunk_id,
+            nsp_id=self.nsp_id
+        ).delete()
+
+        super().delete(*args, **kwargs)
 
 
 class NS3Chunks(models.Model):
@@ -179,6 +221,19 @@ class NSPChunks(models.Model):
         unique_together = (
             'patient_id', 'admission_id', 'toc_id', 'chunk_id', 'nsp_id'
         )
+        
+    def delete(self, *args, **kwargs):
+        # manually delete dependent TaskComments
+        TaskComments.objects.filter(
+            patient_id=self.patient_id,
+            admission_id=self.admission_id,
+            toc_id=self.toc_id,
+            chunk_id=self.chunk_id,
+            nsp_id=self.nsp_id
+        ).delete()
+
+        super().delete(*args, **kwargs)
+
 
 class TaskComments(models.Model):
     comment_id = models.IntegerField(primary_key=True) 
@@ -199,7 +254,7 @@ class TaskComments(models.Model):
         
 
 class StartComments(models.Model):
-    comment_id = models.IntegerField(primary_key=True) 
+    comment_id = models.ForeignKey(TaskComments, on_delete=models.CASCADE, db_column='comment_id') 
 
     patient_id = models.IntegerField()
     admission_id = models.IntegerField()
@@ -214,9 +269,22 @@ class StartComments(models.Model):
     class Meta:
         db_table = '__start_comments'
         managed = False
+    
+    def delete(self, *args, **kwargs):
+        # manually delete dependent StitchedChunks
+        StitchedChunks.objects.filter(
+            patient_id=self.patient_id,
+            admission_id=self.admission_id,
+            toc_id=self.toc_id,
+            start_chunk=self.chunk_id,
+            start_tid=self.comment_id,
+            nsp_id=self.nsp_id
+        ).delete()
+
+        super().delete(*args, **kwargs)
 
 class TaskIDComments(models.Model):
-    comment_id = models.IntegerField(primary_key=True) 
+    comment_id = models.ForeignKey(TaskComments, on_delete=models.CASCADE, db_column='comment_id') 
 
     patient_id = models.IntegerField()
     admission_id = models.IntegerField()
@@ -234,7 +302,7 @@ class TaskIDComments(models.Model):
         managed = False
 
 class StopComments(models.Model):
-    comment_id = models.IntegerField(primary_key=True) 
+    comment_id = models.ForeignKey(TaskComments, on_delete=models.CASCADE, db_column='comment_id')
 
     patient_id = models.IntegerField()
     admission_id = models.IntegerField()
@@ -249,6 +317,19 @@ class StopComments(models.Model):
     class Meta:
         db_table = '__stop_comments'
         managed = False
+        
+    def delete(self, *args, **kwargs):
+        # manually delete dependent StitchedChunks
+        StitchedChunks.objects.filter(
+            patient_id=self.patient_id,
+            admission_id=self.admission_id,
+            toc_id=self.toc_id,
+            stop_chunk=self.chunk_id,
+            stop_tid=self.comment_id,
+            nsp_id=self.nsp_id
+        ).delete()
+
+        super().delete(*args, **kwargs) 
 
 class StitchedChunks(models.Model):
     patient_id = models.IntegerField()
