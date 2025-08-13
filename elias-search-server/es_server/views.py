@@ -6,7 +6,8 @@ from datajoint.schemas import VirtualModule
 import json
 import datajoint as dj
 from .utils import dj_conn, parse_time
-from .query import QueryBuilder
+#from .query import QueryBuilder
+from .dj_query import QueryBuilder
 
 @csrf_exempt
 def ssh_auth(request):

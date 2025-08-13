@@ -64,7 +64,7 @@ class ElectrodeContacts(models.Model):
     pass
 
 class TOCInstance(models.Model):
-    patient_id = models.IntegerField()
+    patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='patient_id')
     admission_id = models.IntegerField()
     toc_id = models.IntegerField()
     base_file = models.CharField(max_length=256)
@@ -99,7 +99,7 @@ class TOCInstance(models.Model):
 
 
 class NEVChunks(models.Model):
-    patient_id = models.IntegerField()
+    patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='patient_id')
     admission_id = models.IntegerField()
     toc_id = models.IntegerField()
     chunk_id = models.IntegerField()
@@ -134,7 +134,7 @@ class NEVChunks(models.Model):
 
 
 class NS3Chunks(models.Model):
-    patient_id = models.IntegerField()
+    patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='patient_id')
     admission_id = models.IntegerField()
     toc_id = models.IntegerField()
     chunk_id = models.IntegerField()
@@ -157,7 +157,7 @@ class NS3Chunks(models.Model):
         )
 
 class NS5Chunks(models.Model):
-    patient_id = models.IntegerField()
+    patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='patient_id')
     admission_id = models.IntegerField()
     toc_id = models.IntegerField()
     chunk_id = models.IntegerField()
@@ -179,7 +179,7 @@ class NS5Chunks(models.Model):
         )
 
 class NSPChunks(models.Model):
-    patient_id = models.IntegerField()
+    patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='patient_id')
     admission_id = models.IntegerField()
     toc_id = models.IntegerField()
     chunk_id = models.IntegerField()
@@ -238,7 +238,7 @@ class NSPChunks(models.Model):
 class TaskComments(models.Model):
     comment_id = models.IntegerField(primary_key=True) 
 
-    patient_id = models.IntegerField()
+    patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='patient_id')
     admission_id = models.IntegerField()
     toc_id = models.IntegerField()
     chunk_id = models.IntegerField()
@@ -256,7 +256,7 @@ class TaskComments(models.Model):
 class StartComments(models.Model):
     comment_id = models.ForeignKey(TaskComments, on_delete=models.CASCADE, db_column='comment_id') 
 
-    patient_id = models.IntegerField()
+    patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='patient_id')
     admission_id = models.IntegerField()
     toc_id = models.IntegerField()
     chunk_id = models.IntegerField()
@@ -286,7 +286,7 @@ class StartComments(models.Model):
 class TaskIDComments(models.Model):
     comment_id = models.ForeignKey(TaskComments, on_delete=models.CASCADE, db_column='comment_id') 
 
-    patient_id = models.IntegerField()
+    patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='patient_id')
     admission_id = models.IntegerField()
     toc_id = models.IntegerField()
     chunk_id = models.IntegerField()
@@ -304,7 +304,7 @@ class TaskIDComments(models.Model):
 class StopComments(models.Model):
     comment_id = models.ForeignKey(TaskComments, on_delete=models.CASCADE, db_column='comment_id')
 
-    patient_id = models.IntegerField()
+    patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='patient_id')
     admission_id = models.IntegerField()
     toc_id = models.IntegerField()
     chunk_id = models.IntegerField()
@@ -332,15 +332,15 @@ class StopComments(models.Model):
         super().delete(*args, **kwargs) 
 
 class StitchedChunks(models.Model):
-    patient_id = models.IntegerField()
+    patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='patient_id')
     admission_id = models.IntegerField()
     toc_id = models.IntegerField()
     start_chunk = models.IntegerField()
     nsp_id = models.IntegerField()
-    start_tid = models.IntegerField()
+    start_tid = models.ForeignKey(TaskComments, on_delete=models.CASCADE, db_column='start_tid', related_name='start_tid', to_field='comment_id')
     emu_id = models.IntegerField()
     stop_chunk = models.IntegerField()
-    stop_tid = models.IntegerField()
+    stop_tid = models.ForeignKey(TaskComments, on_delete=models.CASCADE, db_column='stop_tid', related_name='stop_tid', to_field='comment_id')
 
     start_filename = models.CharField(max_length=256)
     stop_filename = models.CharField(max_length=256)
