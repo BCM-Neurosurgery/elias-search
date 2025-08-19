@@ -1,5 +1,6 @@
 "use client"
 import React, { useEffect, useState } from "react";
+import CollapsibleSection from "../CollapsibleSection";
 
 type TimeSlot = {
     day: string; // Sunday, Monday, ...
@@ -8,7 +9,8 @@ type TimeSlot = {
 
 interface TimeOfWeekSelectorProps {
     selectedSlots: TimeSlot[];
-    onChange: (slots: TimeSlot[]) => void
+    onChange: (slots: TimeSlot[]) => void;
+    defaultCollapsed?: boolean;
 }
 
 const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -18,7 +20,7 @@ function slotKey(day: string, hour: number) {
     return `${day}-${hour}`;
 }
 
-export default function TimeOfWeekSelector({ selectedSlots, onChange }: TimeOfWeekSelectorProps) {
+export default function TimeOfWeekSelector({ selectedSlots, onChange, defaultCollapsed = false }: TimeOfWeekSelectorProps) {
     const [isDragging, setIsDragging] = useState(false);
     const [dragMode, setDragMode] = useState<"add" | "remove" | null>(null);
 
@@ -72,9 +74,8 @@ export default function TimeOfWeekSelector({ selectedSlots, onChange }: TimeOfWe
         onChange([]);
     }
     return (
-        <div className="mb-4 p-4 border rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800">
+        <CollapsibleSection title="Select Time of Week" defaultCollapsed={defaultCollapsed}>
             <div className="flex justify-between items-center mb-2">
-                <h3 className="text-md font-bold text-gray-800 dark:text-gray-100">Select Time of Week</h3>
                 <div className="space-x-4">
                     <button
                         onClick={handleSelectAll}
@@ -139,6 +140,6 @@ export default function TimeOfWeekSelector({ selectedSlots, onChange }: TimeOfWe
                     ))}
                 </div>
             </div>
-        </div>
+        </CollapsibleSection>
     );    
 }

@@ -1,11 +1,13 @@
 "use client"
 import React, { useEffect, useState } from "react";
+import CollapsibleSection from "../CollapsibleSection";
 
 interface DateTimeRangeSelectorProps {
     fromDateTime: string | null;
     toDateTime: string | null;
     onFromChange: (val: string | null) => void;
     onToChange: (val: string | null) => void;
+    defaultCollapsed?: boolean;
 }
 
 function formatReadableDate(value: string | null): string {
@@ -15,7 +17,7 @@ function formatReadableDate(value: string | null): string {
 }
 
 export default function DateTimeRangeSelector({
-    fromDateTime, toDateTime, onFromChange, onToChange
+    fromDateTime, toDateTime, onFromChange, onToChange, defaultCollapsed = false
 } : DateTimeRangeSelectorProps) {
     // define error display hook
     const [error, setError] = useState<string | null>(null);
@@ -44,9 +46,7 @@ export default function DateTimeRangeSelector({
     }, [fromDateTime, toDateTime]);
 
     return (
-        <div className="mb-4 p-4 border rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800">
-            <h3 className="text-md font-bold mb-2 text-gray-800 dark:text-gray-100">Select Date Range</h3>
-    
+        <CollapsibleSection title="Select Date Range" defaultCollapsed={defaultCollapsed}>
             <div className="flex flex-col space-y-4">
                 {/* FROM */}
                 <div>
@@ -110,7 +110,7 @@ export default function DateTimeRangeSelector({
             {error && (
                 <div className="text-red-600 dark:text-red-400 mt-2">{error}</div>
             )}
-        </div>
+        </CollapsibleSection>
     );
     
 }

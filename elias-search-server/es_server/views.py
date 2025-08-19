@@ -7,7 +7,10 @@ import json
 import datajoint as dj
 from .utils import dj_conn, parse_time
 #from .query import QueryBuilder
-from .dj_query import QueryBuilder
+from .query import QueryBuilder
+
+def ping(request):
+    return JsonResponse({"message": "able to reach server!"}, status=200)
 
 @csrf_exempt
 def ssh_auth(request):
@@ -42,7 +45,6 @@ def auth_logout(request):
 
 def auth_status(request):
     # for dev purposes always be authenticated
-    # return JsonResponse({"authenticated": True})
     return JsonResponse({"authenticated": request.session.get("ssh_authenticated", False)})
 
 @csrf_exempt

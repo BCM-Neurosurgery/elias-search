@@ -82,6 +82,25 @@ export default function QueryForm({ onResult } : QueryFormProps) {
         fetchFormdata();
     }, []);
 
+    // Set default values for days of stay and times of week after maxDay is loaded
+    useEffect(() => {
+        if (maxDay > 0) {
+            // Set all days of stay as default
+            const allDays = Array.from({ length: maxDay }, (_, i) => i + 1);
+            setSelectedDaysOfStay(allDays);
+            
+            // Set all times of week as default
+            const allTimes: TimeSlot[] = [];
+            const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+            for (const day of daysOfWeek) {
+                for (let hour = 0; hour < 24; hour++) {
+                    allTimes.push({ day, hour });
+                }
+            }
+            setSelectedTimesOfWeek(allTimes);
+        }
+    }, [maxDay]);
+
     const handleSubmit = async () => {
         const session_id = uuidv4();
         setQueryLoading(true);
@@ -203,15 +222,18 @@ export default function QueryForm({ onResult } : QueryFormProps) {
                 toDateTime={toDateTime}
                 onFromChange={setFromDateTime}
                 onToChange={setToDateTime}
+                defaultCollapsed={true}
             />
             <DaysOfStaySelector 
                 maxDay={maxDay}
                 selectedDays={selectedDaysOfStay} 
                 onChange={setSelectedDaysOfStay} 
+                defaultCollapsed={true}
             />
             <TimeOfWeekSelector 
                 selectedSlots={selectedTimesOfWeek} 
                 onChange={setSelectedTimesOfWeek} 
+                defaultCollapsed={true}
             />
             <ModeSelector mode={mode} setMode={setMode} />
             <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0">

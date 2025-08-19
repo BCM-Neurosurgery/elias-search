@@ -1,8 +1,5 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
-from django.contrib.auth import authenticate, get_user_model
-from IPython.core.interactiveshell import InteractiveShellEmbed
-import io, sys
 
 class QueryProgressConsumer(AsyncWebsocketConsumer):
     async def connect(self):
