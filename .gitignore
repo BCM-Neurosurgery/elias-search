@@ -2,3 +2,4 @@
 .env.dev
 example_curl.sh
 elias-search-server/db.sqlite3
+logs/*
