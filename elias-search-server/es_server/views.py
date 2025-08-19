@@ -5,12 +5,26 @@ from paramiko import SSHClient, AutoAddPolicy
 from datajoint.schemas import VirtualModule
 import json
 import datajoint as dj
+from datetime import datetime
 from .utils import dj_conn, parse_time
 #from .query import QueryBuilder
 from .query import QueryBuilder
 
 def ping(request):
-    return JsonResponse({"message": "able to reach server!"}, status=200)
+    """Health check endpoint for the watchdog"""
+    try:
+        # Basic health check - if we can reach this point, Django is running
+        return JsonResponse({
+            "status": "healthy",
+            "message": "Server is running",
+            "timestamp": datetime.now().isoformat()
+        }, status=200)
+    except Exception as e:
+        return JsonResponse({
+            "status": "unhealthy", 
+            "message": f"Server error: {str(e)}",
+            "timestamp": datetime.now().isoformat()
+        }, status=500)
 
 @csrf_exempt
 def ssh_auth(request):
