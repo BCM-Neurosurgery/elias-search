@@ -125,10 +125,15 @@ class QueryBuilder:
                     print(f"Error fetching duration for {x}: {e}")
                     return None
             query_df["duration_s"] = query_df["ns5_file__filepath"].apply(get_duration)
-            query_df["end_time"] = query_df.apply(
-                lambda row: parse_time(row['absolute_time']) + timedelta(seconds=float(row['duration_s'])) if row['duration_s'] else None,
-                axis=1  
-            )
+
+
+            def get_end_time(row):
+                try:
+                    return parse_time(row['absolute_time']) + timedelta(seconds=float(row['duration_s']))
+                except Exception as e:
+                    print(f"Error fetching end_time for {row}: {e}")
+                    return None
+            query_df["end_time"] = query_df.apply(get_end_time, axis=1)
             
             query_df['filetypes'] = query_df.apply(
                 lambda row: ";".join([ft for ft in ['nev', 'ns5', 'ns3'] if row[f"{ft}_file__filepath"]]),
