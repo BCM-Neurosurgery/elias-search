@@ -35,29 +35,29 @@ class QueryBuilder:
     def waterfall_query(self):
         if self.data["mode"] == "datalake":
             # run all steps of query
-            self.send_status("filtering dates")
+            self.send_status("filtering dates 0/100")
             self._timerange_query_dl()
-            self.send_status("filtering patients")
+            self.send_status("filtering patients 10/100")
             self._patient_query()
-            self.send_status("filtering tasks")
+            self.send_status("filtering tasks 20/100")
             self._task_query_dl()
-            self.send_status("filtering stay days")
+            self.send_status("filtering stay days 40/100")
             self._stay_day_query_dl()
-            self.send_status("filtering week times")
+            self.send_status("filtering week times 50/100")
             self._weektime_query_dl()
-            self.send_status("formatting results")
+            self.send_status("formatting results 60/100")
         else:
-            self.send_status("filtering dates")
+            self.send_status("filtering dates 0/100")
             self._timerange_query_s()
-            self.send_status("filtering patients")
+            self.send_status("filtering patients 10/100")
             self._patient_query()
-            self.send_status("filtering stay days")
+            self.send_status("filtering stay days 20/100")
             self._stay_day_query_s()
-            self.send_status("filtering week times")
+            self.send_status("filtering week times 30/100")
             self._weektime_query_s()
-            self.send_status("filtering tasks")
+            self.send_status("filtering tasks 40/100")
             self._task_query_s()
-            self.send_status("formatting results")
+            self.send_status("formatting results 60/100")
     
     def format_query_results(self):
         # initialize result dictionary
@@ -188,6 +188,7 @@ class QueryBuilder:
             ]]
                                                           
         results.rename(columns={'patient_id__emu_id': 'patient'}, inplace=True)
+        self.send_status("finished 100/100")
         return results.to_dict(orient='list')
     
     def _timerange_query_dl(self):

@@ -28,6 +28,7 @@ pip install --upgrade pip && pip install -r requirements.txt
 
 COPY . .
 
+RUN python manage.py makemigrations
 RUN python manage.py migrate
 
 CMD ["daphne", "-b", "0.0.0.0", "-p", "8080", "es_server.asgi:application"]

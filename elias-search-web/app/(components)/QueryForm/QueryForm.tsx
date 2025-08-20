@@ -124,15 +124,18 @@ export default function QueryForm({ onResult } : QueryFormProps) {
             const message = parsed.status;
             console.log("WebSocket status:", message);
 
-            if (message.startsWith("Processed")) {
-                const match = message.match(/Processed (\d+)\/(\d+)/i);
-                if (match) {
-                    const current = parseInt(match[1]);
-                    const total = parseInt(match[2]);
-                    setProgress({ current, total });
-                    setQueryStatus("loading results");
-                }
+            // Check if message contains progress information (e.g., "filtering dates 0/100")
+            const progressMatch = message.match(/(\d+)\/(\d+)$/);
+            if (progressMatch) {
+                const current = parseInt(progressMatch[1]);
+                const total = parseInt(progressMatch[2]);
+                setProgress({ current, total });
+                
+                // Extract the status text (everything before the progress numbers)
+                const statusText = message.replace(/\s+\d+\/\d+$/, '');
+                setQueryStatus(statusText);
             } else {
+                // No progress info, just set the status message
                 setQueryStatus(message);
             }
         }
