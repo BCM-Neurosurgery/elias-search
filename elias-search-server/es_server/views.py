@@ -59,7 +59,7 @@ def auth_logout(request):
 
 def auth_status(request):
     # for dev purposes always be authenticated
-    return JsonResponse({"authenticated": True})
+    #return JsonResponse({"authenticated": True})
     return JsonResponse({"authenticated": request.session.get("ssh_authenticated", False)})
 
 @csrf_exempt
