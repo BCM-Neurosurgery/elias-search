@@ -31,18 +31,17 @@ services:
     command: >
       sh -c "python manage.py migrate && daphne -b 0.0.0.0 -p 8080 es_server.asgi:application"
     restart: unless-stopped
-  # watchdog:
-  #   build:
-  #     context: ./watchdog
-  #   container_name: watchdog
-  #   depends_on:
-  #     - server
-  #   environment:
-  #     TARGET_URL: 'http://server:8080/ping/'
-  #     CHECK_INTERVAL: '60'
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/ping/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
   
 
 
