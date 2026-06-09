@@ -241,8 +241,8 @@ Formal automated tests are not currently included. Before broad public use, add 
 
 Before publishing this repository publicly:
 
-- Choose and add a license.
-- Add `.env.example` files for root and frontend configuration.
+- Confirm the `LICENSE` choice and copyright holder.
+- Review the root and frontend `.env.example` files for any deployment-specific variables your release needs.
 - Ensure real `.env` files, local databases, logs, credentials, and private paths are not committed.
 - Move Django `SECRET_KEY`, `DEBUG`, allowed hosts, CORS origins, and deployment hostnames to environment-driven configuration.
 - Generalize or remove institution-specific hostnames and reverse-proxy paths unless they are intentionally documented as examples.
