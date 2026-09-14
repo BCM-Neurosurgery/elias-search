@@ -1,5 +1,6 @@
 from .utils import parse_time
 from .models import *
+from .brain_regions import expand_values
 from datetime import datetime, timedelta, MINYEAR, MAXYEAR
 import pandas as pd
 from channels.layers import get_channel_layer
@@ -39,6 +40,8 @@ class QueryBuilder:
             self._timerange_query_dl()
             self.send_status("filtering patients 10/100")
             self._patient_query()
+            self.send_status("filtering brain regions 15/100")
+            self._region_query()
             self.send_status("filtering tasks 20/100")
             self._task_query_dl()
             self.send_status("filtering stay days 40/100")
@@ -51,6 +54,8 @@ class QueryBuilder:
             self._timerange_query_s()
             self.send_status("filtering patients 10/100")
             self._patient_query()
+            self.send_status("filtering brain regions 15/100")
+            self._region_query()
             self.send_status("filtering stay days 20/100")
             self._stay_day_query_s()
             self.send_status("filtering week times 30/100")
@@ -220,6 +225,58 @@ class QueryBuilder:
         # get patient id and filter nsp rows
         self.filter &= Q(patient_id__emu_id__in=self.data["selectedPatients"])
         return self.filter
+
+    @staticmethod
+    def _admission_filter(admission_keys):
+        """OR together one (patient, admission) pair per key.
+
+        Returns a filter matching nothing when there are no keys, so selecting
+        regions that nobody was implanted in yields an empty result rather than
+        silently falling back to every recording.
+        """
+        admission_keys = list(admission_keys)
+        if not admission_keys:
+            return Q(patient_id__in=[])
+
+        filters = Q()
+        for patient_id, admission_id in admission_keys:
+            filters |= Q(patient_id=patient_id, admission_id=admission_id)
+        return filters
+
+    def _region_query(self):
+        """Keep only admissions with at least one macro contact in a selected region.
+
+        This is a patient-level filter rather than a recording-level one: an
+        electrode montage applies to a whole admission, so every recording from
+        an admission with a contact in the region is kept.
+        """
+        # no filtering when the caller wants every region, which is the default
+        if self.data.get("allRegions", True):
+            return self.filter
+
+        selected = self.data.get("selectedRegions") or []
+        if not selected:
+            # regions were explicitly narrowed to nothing - match nothing
+            self.filter &= Q(patient_id__in=[])
+            return self.filter
+
+        # a selection can correspond to several FreeSurfer spellings
+        labels = expand_values(selected)
+        try:
+            admission_keys = AreaFsVox.objects.filter(
+                area_fs_vox__in=labels
+            ).values_list('patient_id', 'admission_id').distinct()
+            admission_keys = list(admission_keys)
+        except Exception as e:
+            # electrode localization is populated separately from the recordings,
+            # so a missing or unreadable table must not take the whole query down
+            print(f"Error fetching electrode regions: {e} - skipping region filter")
+            self.send_status("brain region data unavailable - region filter skipped")
+            return self.filter
+
+        self.filter &= self._admission_filter(admission_keys)
+        return self.filter
+
     
     def _task_query_dl(self):
         # first filter task list depending on flags

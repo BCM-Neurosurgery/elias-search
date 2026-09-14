@@ -57,11 +57,99 @@ class Admission(models.Model):
 
         super().delete(*args, **kwargs)
 
-class Probes(models.Model):
-    pass
+class ProbeConfig(models.Model):
+    patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='patient_id')
+    admission_id = models.IntegerField()
+    config_id = models.IntegerField()
 
-class ElectrodeContacts(models.Model):
-    pass
+    start_time = models.CharField(max_length=256)
+    end_time = models.CharField(max_length=256)
+    mri_file = models.CharField(max_length=256)
+    ct_file = models.CharField(max_length=256)
+    pip_file = models.CharField(max_length=256)
+    t1_file = models.CharField(max_length=256)
+
+    class Meta:
+        db_table = 'probe_config'
+        managed = False
+        unique_together = (
+            'patient_id', 'admission_id', 'config_id'
+        )
+
+
+class Probes(models.Model):
+    patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='patient_id')
+    admission_id = models.IntegerField()
+    config_id = models.IntegerField()
+    probe_id = models.IntegerField()
+
+    label = models.CharField(max_length=64)
+    region_target = models.CharField(max_length=64)
+    micros_available = models.BooleanField()
+    n_contacts = models.IntegerField()
+    hemisphere = models.CharField(max_length=64)
+    manufacturer = models.CharField(max_length=64)
+    type = models.CharField(max_length=64)
+    direction_x = models.FloatField()
+    direction_y = models.FloatField()
+    direction_z = models.FloatField()
+
+    class Meta:
+        db_table = 'probes'
+        managed = False
+        unique_together = (
+            'patient_id', 'admission_id', 'config_id', 'probe_id'
+        )
+
+
+class MacroContacts(models.Model):
+    patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='patient_id')
+    admission_id = models.IntegerField()
+    config_id = models.IntegerField()
+    probe_id = models.IntegerField()
+    electrode_id = models.IntegerField()
+
+    electrode_label = models.CharField(max_length=64)
+    micro_adjacent = models.BooleanField()
+    native_x = models.FloatField()
+    native_y = models.FloatField()
+    native_z = models.FloatField()
+    mni305_x = models.FloatField()
+    mni305_y = models.FloatField()
+    mni305_z = models.FloatField()
+    mni152_x = models.FloatField()
+    mni152_y = models.FloatField()
+    mni152_z = models.FloatField()
+
+    class Meta:
+        db_table = 'macro_contacts'
+        managed = False
+        unique_together = (
+            'patient_id', 'admission_id', 'config_id', 'probe_id', 'electrode_id'
+        )
+
+
+class AreaFsVox(models.Model):
+    """FreeSurfer label of the voxel each macro contact sits in.
+
+    The DataJoint table is keyed by the full MacroContacts key, so patient and
+    admission are columns here and no join is needed to find which admissions
+    have a contact in a given region.
+    """
+    patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='patient_id')
+    admission_id = models.IntegerField()
+    config_id = models.IntegerField()
+    probe_id = models.IntegerField()
+    electrode_id = models.IntegerField()
+
+    area_fs_vox = models.CharField(max_length=64)
+
+    class Meta:
+        db_table = 'area_fs_vox'
+        managed = False
+        unique_together = (
+            'patient_id', 'admission_id', 'config_id', 'probe_id', 'electrode_id'
+        )
 
 class TOCInstance(models.Model):
     patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='patient_id')

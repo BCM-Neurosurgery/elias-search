@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { v4 as uuidv4 } from 'uuid';
 import TaskSelector from "./TaskSelector";
 import PatientSelector from "./PatientSelector";
-// import BrainRegionSelector from "./DateTimeRangeSelector";
+import BrainRegionSelector, { type RegionOption } from "./BrainRegionSelector";
 import DateTimeRangeSelector from "./DateTimeRangeSelector";
 import DaysOfStaySelector from "./DaysOfStaySelector";
 import TimeOfWeekSelector from "./TimeOfWeekSelector";
@@ -33,7 +33,9 @@ export default function QueryForm({ onResult } : QueryFormProps) {
     const [excludeStim, setExcludeStim] = useState<boolean>(true);
     const [patients, setPatients] = useState<string[]>([]);
     const [selectedPatients, setSelectedPatients] = useState<string[]>([]);
-    // const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
+    const [regionList, setRegionList] = useState<RegionOption[]>([]);
+    const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
+    const [allRegions, setAllRegions] = useState<boolean>(true);
     const [fromDateTime, setFromDateTime] = useState<string | null>(null);
     const [toDateTime, setToDateTime] = useState<string | null>(null);
     const [maxDay, setMaxDay] = useState<number>(5);
@@ -73,6 +75,10 @@ export default function QueryForm({ onResult } : QueryFormProps) {
                 const taskOptions = (data.tasks || []).map((task: string) => ({value: task, label: task}))
                 setTaskList(taskOptions);
                 setMaxDay(data.max_days || 5);
+                const regionOptions: RegionOption[] = data.brain_regions || [];
+                setRegionList(regionOptions);
+                // default to every region so an untouched form keeps current behavior
+                setSelectedRegions(regionOptions.map((region) => region.value));
             } catch (err) {
                 console.error("Error fetching patients:", err)
             } finally {
@@ -148,7 +154,8 @@ export default function QueryForm({ onResult } : QueryFormProps) {
             allData,
             allTasks,
             excludeStim,
-            // selectedRegions,
+            allRegions,
+            selectedRegions,
             fromDateTime,
             toDateTime,
             selectedDaysOfStay,
@@ -219,7 +226,14 @@ export default function QueryForm({ onResult } : QueryFormProps) {
                 value={selectedPatients} 
                 onChange={setSelectedPatients} 
             />
-            {/* <BrainRegionSelector value={selectedRegions} onChange={setSelectedRegions} /> */}
+            <BrainRegionSelector
+                regions={regionList}
+                value={selectedRegions}
+                onChange={setSelectedRegions}
+                allRegions={allRegions}
+                setAllRegions={setAllRegions}
+                defaultCollapsed={true}
+            />
             <DateTimeRangeSelector
                 fromDateTime={fromDateTime}
                 toDateTime={toDateTime}

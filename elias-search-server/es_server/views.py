@@ -7,6 +7,7 @@ import json
 import datajoint as dj
 from datetime import datetime
 from .utils import dj_conn, parse_time
+from .brain_regions import form_options
 #from .query import QueryBuilder
 from .query import QueryBuilder
 
@@ -102,6 +103,22 @@ def get_formdata(request):
         if days_of_stay > 30:
             days_of_stay = 0
         max_days = max(max_days, days_of_stay)
-    return JsonResponse({'patients': patient_list, 'tasks': task_list, 'max_days': max_days})
+    # brain regions for the region filter: the full FreeSurfer catalog, plus any
+    # label present in the data that the catalog does not already cover
+    observed_regions = []
+    try:
+        observed_regions = list(set(schemas.AreaFsVox().fetch('area_fs_vox')))
+    except Exception as e:
+        # electrode localization is populated separately from the recordings, so
+        # the form still works off the static catalog when it is not there yet
+        print(f"Error fetching electrode regions: {e} - using static region catalog")
+    brain_regions = form_options(extra_labels=observed_regions)
+
+    return JsonResponse({
+        'patients': patient_list,
+        'tasks': task_list,
+        'max_days': max_days,
+        'brain_regions': brain_regions,
+    })
 
 

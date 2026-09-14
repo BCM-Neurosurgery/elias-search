@@ -157,6 +157,7 @@ Backend development requires the DataJoint/MySQL configuration and mounted recor
 3. Choose query filters:
    - Tasks, all tasks, all data, and stimulation exclusion.
    - Patients.
+   - Brain regions (keeps patients with an electrode contact in a selected region).
    - Date-time range.
    - Days of stay.
    - Time of week.
@@ -177,7 +178,7 @@ The frontend is the canonical client for this API. The API is not currently vers
 | `POST` | `/auth/login/` | Authenticate a user and create a session. |
 | `GET` | `/auth/status/` | Check whether the current session is authenticated. |
 | `POST` | `/auth/logout/` | Clear the current authenticated session. |
-| `GET` | `/query/formdata` | Fetch patients, tasks, and max day-of-stay values for query controls. |
+| `GET` | `/query/formdata` | Fetch patients, tasks, brain regions, and max day-of-stay values for query controls. |
 | `POST` | `/query/db` | Execute a metadata query and return column-oriented results. |
 | `WS` | `/ws/query-progress/<session_id>` | Stream query progress messages for a submitted query. |
 
@@ -197,6 +198,25 @@ The frontend is the canonical client for this API. The API is not currently vers
 3. Insert the filter into `waterfall_query` for `datalake`, `stitched`, or both modes.
 4. Preserve progress messages so long-running queries remain observable from the UI.
 5. Make sure result formatting still produces table-compatible, column-oriented JSON.
+
+### Brain Region Filtering
+
+Brain-region filtering is a patient-level filter driven by the `AreaFsVox` DataJoint
+table, which holds the FreeSurfer label of the voxel each macro contact sits in.
+An electrode montage applies to a whole admission, so selecting a region keeps every
+recording from admissions with at least one contact localized to it.
+
+- `elias-search-server/es_server/brain_regions.py` enumerates the FreeSurfer
+  `aparc+aseg` labels offered by the form. Labels are grouped for display and carry
+  the alternate spellings FreeSurfer versions disagree on, so a selection made in the
+  browser still matches data written by another version.
+- `/query/formdata` serves that catalog, appending any `area_fs_vox` value present in
+  the database that the catalog does not already cover.
+- `QueryBuilder._region_query` turns the selection into an admission filter for both
+  `datalake` and `stitched` modes. It is skipped when the payload sets
+  `allRegions`, which is the form default.
+- The localization tables are populated separately from the recordings, so a missing
+  `AreaFsVox` table degrades to an unfiltered query with a warning rather than an error.
 
 ### Add Output Columns
 
@@ -226,6 +246,15 @@ cd elias-search-server
 python -m py_compile manage.py es_server/*.py
 ```
 
+Backend unit tests. These run against a throwaway SQLite database seeded with
+synthetic electrode and recording rows, so they need neither the DataJoint/MySQL
+deployment nor the mounted recording paths:
+
+```bash
+cd elias-search-server
+python -m unittest discover tests
+```
+
 Full-stack smoke test:
 
 1. Start the stack with Docker Compose.
@@ -235,7 +264,7 @@ Full-stack smoke test:
 5. Run a small sample query and confirm the UI renders a result table.
 6. Download CSV and confirm the exported columns match the table.
 
-Formal automated tests are not currently included. Before broad public use, add focused tests for query payload handling, result formatting, authentication/session behavior, and frontend table/export behavior.
+Automated coverage is currently limited to the brain-region filter under `elias-search-server/tests`. Before broad public use, add focused tests for the remaining query payload handling, result formatting, authentication/session behavior, and frontend table/export behavior.
 
 ## Open Source Readiness
 
