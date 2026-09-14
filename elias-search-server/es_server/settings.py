@@ -9,9 +9,11 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
+import os
 from pathlib import Path
 from corsheaders.defaults import default_headers
+import pymysql
+pymysql.install_as_MySQLdb()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,7 +31,8 @@ DEBUG = True
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    'elias.bcms.bcm.edu'
+    'elias.bcms.bcm.edu',
+    'server'
 ]
 
 
@@ -44,7 +47,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'channels'
+    'channels',
+    'es_server'
     #'es_server.apps.DatajointConn',
 ]
 
@@ -88,12 +92,6 @@ ASGI_APPLICATION = 'es_server.asgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
 
 
 # Password validation
@@ -152,6 +150,8 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 ]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
+    "http://client:3000",
+    "http://server:8080",
     "http://localhost:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3000",
@@ -176,3 +176,26 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer"
     }
 }
+
+# Database configuration
+# settings.py
+db_config_path = str(BASE_DIR / "es_server/my.cnf") if os.environ.get("ENVIRONMENT", "prod") == "prod" else str(BASE_DIR / "es_server/my.cnf.dev")
+
+DATABASES = {
+    # Default database for Django's internal operations (sessions, admin, etc.)
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    },
+    # Neural data database (read-only access)
+    "neural_data": {
+        "ENGINE": "django.db.backends.mysql",
+        "OPTIONS": {
+            "read_default_file": db_config_path,
+        },
+    }
+}
+
+# Database routers to control which models use which database
+DATABASE_ROUTERS = ['es_server.database_router.NeuralDataRouter']
+

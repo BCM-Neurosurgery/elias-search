@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { v4 as uuidv4 } from 'uuid';
 import TaskSelector from "./TaskSelector";
 import PatientSelector from "./PatientSelector";
-// import BrainRegionSelector from "./DateTimeRangeSelector";
+import BrainRegionSelector, { type RegionOption } from "./BrainRegionSelector";
 import DateTimeRangeSelector from "./DateTimeRangeSelector";
 import DaysOfStaySelector from "./DaysOfStaySelector";
 import TimeOfWeekSelector from "./TimeOfWeekSelector";
@@ -33,7 +33,9 @@ export default function QueryForm({ onResult } : QueryFormProps) {
     const [excludeStim, setExcludeStim] = useState<boolean>(true);
     const [patients, setPatients] = useState<string[]>([]);
     const [selectedPatients, setSelectedPatients] = useState<string[]>([]);
-    // const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
+    const [regionList, setRegionList] = useState<RegionOption[]>([]);
+    const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
+    const [allRegions, setAllRegions] = useState<boolean>(true);
     const [fromDateTime, setFromDateTime] = useState<string | null>(null);
     const [toDateTime, setToDateTime] = useState<string | null>(null);
     const [maxDay, setMaxDay] = useState<number>(5);
@@ -73,6 +75,10 @@ export default function QueryForm({ onResult } : QueryFormProps) {
                 const taskOptions = (data.tasks || []).map((task: string) => ({value: task, label: task}))
                 setTaskList(taskOptions);
                 setMaxDay(data.max_days || 5);
+                const regionOptions: RegionOption[] = data.brain_regions || [];
+                setRegionList(regionOptions);
+                // default to every region so an untouched form keeps current behavior
+                setSelectedRegions(regionOptions.map((region) => region.value));
             } catch (err) {
                 console.error("Error fetching patients:", err)
             } finally {
@@ -81,6 +87,25 @@ export default function QueryForm({ onResult } : QueryFormProps) {
         };
         fetchFormdata();
     }, []);
+
+    // Set default values for days of stay and times of week after maxDay is loaded
+    useEffect(() => {
+        if (maxDay > 0) {
+            // Set all days of stay as default
+            const allDays = Array.from({ length: maxDay }, (_, i) => i + 1);
+            setSelectedDaysOfStay(allDays);
+            
+            // Set all times of week as default
+            const allTimes: TimeSlot[] = [];
+            const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+            for (const day of daysOfWeek) {
+                for (let hour = 0; hour < 24; hour++) {
+                    allTimes.push({ day, hour });
+                }
+            }
+            setSelectedTimesOfWeek(allTimes);
+        }
+    }, [maxDay]);
 
     const handleSubmit = async () => {
         const session_id = uuidv4();
@@ -105,15 +130,18 @@ export default function QueryForm({ onResult } : QueryFormProps) {
             const message = parsed.status;
             console.log("WebSocket status:", message);
 
-            if (message.startsWith("Processed")) {
-                const match = message.match(/Processed (\d+)\/(\d+)/i);
-                if (match) {
-                    const current = parseInt(match[1]);
-                    const total = parseInt(match[2]);
-                    setProgress({ current, total });
-                    setQueryStatus("loading results");
-                }
+            // Check if message contains progress information (e.g., "filtering dates 0/100")
+            const progressMatch = message.match(/(\d+)\/(\d+)$/);
+            if (progressMatch) {
+                const current = parseInt(progressMatch[1]);
+                const total = parseInt(progressMatch[2]);
+                setProgress({ current, total });
+                
+                // Extract the status text (everything before the progress numbers)
+                const statusText = message.replace(/\s+\d+\/\d+$/, '');
+                setQueryStatus(statusText);
             } else {
+                // No progress info, just set the status message
                 setQueryStatus(message);
             }
         }
@@ -126,7 +154,8 @@ export default function QueryForm({ onResult } : QueryFormProps) {
             allData,
             allTasks,
             excludeStim,
-            // selectedRegions,
+            allRegions,
+            selectedRegions,
             fromDateTime,
             toDateTime,
             selectedDaysOfStay,
@@ -197,21 +226,31 @@ export default function QueryForm({ onResult } : QueryFormProps) {
                 value={selectedPatients} 
                 onChange={setSelectedPatients} 
             />
-            {/* <BrainRegionSelector value={selectedRegions} onChange={setSelectedRegions} /> */}
+            <BrainRegionSelector
+                regions={regionList}
+                value={selectedRegions}
+                onChange={setSelectedRegions}
+                allRegions={allRegions}
+                setAllRegions={setAllRegions}
+                defaultCollapsed={true}
+            />
             <DateTimeRangeSelector
                 fromDateTime={fromDateTime}
                 toDateTime={toDateTime}
                 onFromChange={setFromDateTime}
                 onToChange={setToDateTime}
+                defaultCollapsed={true}
             />
             <DaysOfStaySelector 
                 maxDay={maxDay}
                 selectedDays={selectedDaysOfStay} 
                 onChange={setSelectedDaysOfStay} 
+                defaultCollapsed={true}
             />
             <TimeOfWeekSelector 
                 selectedSlots={selectedTimesOfWeek} 
                 onChange={setSelectedTimesOfWeek} 
+                defaultCollapsed={true}
             />
             <ModeSelector mode={mode} setMode={setMode} />
             <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0">

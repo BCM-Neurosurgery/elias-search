@@ -28,7 +28,7 @@ services:
       - ${STITCHED_PATH}:/mnt/stitched/EMU-18112:ro
       - ./elias-search-server/dj_log.log:/mnt/lake-database/stitched-logs/datajoint_computed_table.log
     command: >
-      sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8080"
+      sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8081"
   nginx:
     image: nginx:alpine
     ports:
@@ -40,6 +40,19 @@ services:
     depends_on:
       - client
       - server
+  watchdog:
+    build:
+      context: ./watchdog
+    container_name: watchdog
+    depends_on:
+      - server
+    environment:
+      TARGET_URL: 'http://server:8081/ping/'
+      CHECK_INTERVAL: '60'
+    volumes:
+      - ./docker-compose-dev.yml:/app/docker-compose.yml
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
   
 
 

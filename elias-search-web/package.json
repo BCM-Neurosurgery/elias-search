@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "env-cmd -f .env.dev next dev --turbopack",
+    "dev": "env-cmd -f .env.dev next dev -p 3001 --turbopack",
     "build": "env-cmd -f .env.prod next build",
     "start": "env-cmd -f .env.prod next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@tanstack/react-table": "^8.21.3",
     "env-cmd": "^10.1.0",
     "next": "15.3.5",

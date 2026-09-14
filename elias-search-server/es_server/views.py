@@ -5,8 +5,27 @@ from paramiko import SSHClient, AutoAddPolicy
 from datajoint.schemas import VirtualModule
 import json
 import datajoint as dj
+from datetime import datetime
 from .utils import dj_conn, parse_time
+from .brain_regions import form_options
+#from .query import QueryBuilder
 from .query import QueryBuilder
+
+def ping(request):
+    """Health check endpoint for the watchdog"""
+    try:
+        # Basic health check - if we can reach this point, Django is running
+        return JsonResponse({
+            "status": "healthy",
+            "message": "Server is running",
+            "timestamp": datetime.now().isoformat()
+        }, status=200)
+    except Exception as e:
+        return JsonResponse({
+            "status": "unhealthy", 
+            "message": f"Server error: {str(e)}",
+            "timestamp": datetime.now().isoformat()
+        }, status=500)
 
 @csrf_exempt
 def ssh_auth(request):
@@ -41,7 +60,7 @@ def auth_logout(request):
 
 def auth_status(request):
     # for dev purposes always be authenticated
-    # return JsonResponse({"authenticated": True})
+    #return JsonResponse({"authenticated": True})
     return JsonResponse({"authenticated": request.session.get("ssh_authenticated", False)})
 
 @csrf_exempt
@@ -84,6 +103,22 @@ def get_formdata(request):
         if days_of_stay > 30:
             days_of_stay = 0
         max_days = max(max_days, days_of_stay)
-    return JsonResponse({'patients': patient_list, 'tasks': task_list, 'max_days': max_days})
+    # brain regions for the region filter: the full FreeSurfer catalog, plus any
+    # label present in the data that the catalog does not already cover
+    observed_regions = []
+    try:
+        observed_regions = list(set(schemas.AreaFsVox().fetch('area_fs_vox')))
+    except Exception as e:
+        # electrode localization is populated separately from the recordings, so
+        # the form still works off the static catalog when it is not there yet
+        print(f"Error fetching electrode regions: {e} - using static region catalog")
+    brain_regions = form_options(extra_labels=observed_regions)
+
+    return JsonResponse({
+        'patients': patient_list,
+        'tasks': task_list,
+        'max_days': max_days,
+        'brain_regions': brain_regions,
+    })
 
 

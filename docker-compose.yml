@@ -27,9 +27,21 @@ services:
       - ${DATALAKE_PATH}:/mnt/datalake/data/emu:ro
       - ${STITCHED_PATH}:/mnt/stitched/EMU-18112:ro
       - ./elias-search-server/dj_log.log:/mnt/lake-database/stitched-logs/datajoint_computed_table.log
+      - ./elias-search-server/db.sqlite3:/app/db.sqlite3
     command: >
       sh -c "python manage.py migrate && daphne -b 0.0.0.0 -p 8080 es_server.asgi:application"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/ping/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
   
 
 

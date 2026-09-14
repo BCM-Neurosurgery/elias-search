@@ -20,3 +20,4 @@ source ./.env
 
 docker compose build --ssh default
 docker compose up -d
+docker compose logs -f server

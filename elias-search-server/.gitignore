@@ -1,3 +1,5 @@
 dj_log.log
 db.sqlite3
 es_server/my.cnf*
+__pycache__/
+*.pyc

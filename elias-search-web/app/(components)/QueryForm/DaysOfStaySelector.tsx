@@ -1,13 +1,15 @@
 "use client"
 import React, { useEffect, useRef, useState } from "react";
+import CollapsibleSection from "../CollapsibleSection";
 
 interface DaysOfStaySelectorProps {
     maxDay: number; // the maximum day of stay (n)
     selectedDays: number[];
     onChange: (days: number[]) => void;
+    defaultCollapsed?: boolean;
 }
 
-export default function DaysOfStaySelector({ maxDay, selectedDays, onChange }: DaysOfStaySelectorProps) {
+export default function DaysOfStaySelector({ maxDay, selectedDays, onChange, defaultCollapsed = false }: DaysOfStaySelectorProps) {
     const [isDragging, setIsDragging] = useState(false);
     const [mode, setMode] = useState<"add" | "remove" | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -64,50 +66,46 @@ export default function DaysOfStaySelector({ maxDay, selectedDays, onChange }: D
     }, []);
 
     return (
-        <div
-            className="mb-4 p-4 border rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-            ref={containerRef}
-        >
-            <div className="flex justify-between items-center mb-2">
-                <h3 className="text-md font-bold text-gray-800 dark:text-gray-100">
-                    Select Days of Stay
-                </h3>
-                <button
-                    onClick={toggleAll}
-                    className="text-sm text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300"
-                >
-                    {allSelected ? "Select None" : "Select All"}
-                </button>
-            </div>
+        <CollapsibleSection title="Select Days of Stay" defaultCollapsed={defaultCollapsed}>
+            <div ref={containerRef}>
+                <div className="flex justify-between items-center mb-2">
+                    <button
+                        onClick={toggleAll}
+                        className="text-sm text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300"
+                    >
+                        {allSelected ? "Select None" : "Select All"}
+                    </button>
+                </div>
     
-            <div className="inline-flex select-none border border-solid border-gray-400 dark:border-gray-600 rounded overflow-hidden">
-                {days.map((day, idx) => {
-                    const isSelected = selectedDays.includes(day);
-                    const isLast = idx === days.length - 1;
-    
-                    return (
-                        <div
-                            key={day}
-                            onMouseDown={() => handleMouseDown(day)}
-                            onMouseEnter={() => handleMouseEnter(day)}
-                            className={`w-10 h-10 flex items-center justify-center cursor-pointer
-                                ${
-                                    isSelected
-                                        ? "bg-blue-600 text-white"
-                                        : "bg-white text-gray-800 dark:bg-gray-700 dark:text-gray-100"
-                                }
-                                ${
-                                    !isLast
-                                        ? "border-r border-dashed border-gray-600 dark:border-gray-500"
-                                        : ""
-                                }
-                            `}
-                        >
-                            {day}
-                        </div>
-                    );
-                })}
+                <div className="inline-flex select-none border border-solid border-gray-400 dark:border-gray-600 rounded overflow-hidden">
+                    {days.map((day, idx) => {
+                        const isSelected = selectedDays.includes(day);
+                        const isLast = idx === days.length - 1;
+        
+                        return (
+                            <div
+                                key={day}
+                                onMouseDown={() => handleMouseDown(day)}
+                                onMouseEnter={() => handleMouseEnter(day)}
+                                className={`w-10 h-10 flex items-center justify-center cursor-pointer
+                                    ${
+                                        isSelected
+                                            ? "bg-blue-600 text-white"
+                                            : "bg-white text-gray-800 dark:bg-gray-700 dark:text-gray-100"
+                                    }
+                                    ${
+                                        !isLast
+                                            ? "border-r border-dashed border-gray-600 dark:border-gray-500"
+                                            : ""
+                                    }
+                                `}
+                            >
+                                {day}
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
-        </div>
+        </CollapsibleSection>
     );    
 }
