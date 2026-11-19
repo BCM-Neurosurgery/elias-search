@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+bash ./scripts/prepare_runtime_files.sh db.sqlite3 dj_log.log
+
 export DOCKER_BUILDKIT=1  # ⬅ Enable BuildKit
 
 # add ssh agent

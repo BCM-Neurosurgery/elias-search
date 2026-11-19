@@ -26,7 +26,11 @@ services:
     volumes:
       - ${DATALAKE_PATH}:/mnt/datalake/data/emu:ro
       - ${STITCHED_PATH}:/mnt/stitched/EMU-18112:ro
-      - ./elias-search-server/dj_log.log:/mnt/lake-database/stitched-logs/datajoint_computed_table.log
+      - type: bind
+        source: ./elias-search-server/dj_log.log
+        target: /mnt/lake-database/stitched-logs/datajoint_computed_table.log
+        bind:
+          create_host_path: false
     command: >
       sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8081"
   nginx:

@@ -81,6 +81,7 @@ Docker Compose is the recommended way to run the full stack.
 ```bash
 cp .env.example .env
 # edit .env with your database credentials, service URLs, and mounted data paths
+bash scripts/prepare_runtime_files.sh db.sqlite3 dj_log.log
 docker compose up --build
 ```
 
@@ -89,7 +90,13 @@ The production-style compose file publishes:
 - Frontend: `http://localhost:3000`
 - Backend: `http://localhost:8080`
 
-The helper script `./start_service.sh` sources `.env`, builds with Docker BuildKit/SSH forwarding, starts the stack, and follows server logs. Use it when your environment needs SSH access to install private Git dependencies:
+The preparation command creates missing SQLite and log files without overwriting
+existing files. Django's startup migrations initialize a new, empty SQLite file.
+If either path is a directory or symlink, preparation stops so you can inspect it
+and move it aside deliberately. The file bind mounts disable automatic directory
+creation, so skipping preparation produces a missing-source error.
+
+The helper script `./start_service.sh` prepares these files automatically, sources `.env`, builds with Docker BuildKit/SSH forwarding, starts the stack, and follows server logs. Use it when your environment needs SSH access to install private Git dependencies:
 
 ```bash
 ./start_service.sh
@@ -100,6 +107,7 @@ The helper script `./start_service.sh` sources `.env`, builds with Docker BuildK
 ```bash
 cp .env.example .env.dev
 # edit .env.dev for local development
+bash scripts/prepare_runtime_files.sh dj_log.log
 docker compose -f docker-compose-dev.yml up --build
 ```
 
@@ -109,7 +117,7 @@ The development compose file publishes:
 - Backend: `http://localhost:8081`
 - Optional Nginx reverse proxy: `https://localhost:8444`, if configured with local certificates
 
-The helper script `./start_service_dev.sh` sources `.env.dev`, builds with Docker BuildKit/SSH forwarding, and starts the development stack:
+The helper script `./start_service_dev.sh` prepares the log file automatically, sources `.env.dev`, builds with Docker BuildKit/SSH forwarding, and starts the development stack:
 
 ```bash
 ./start_service_dev.sh
@@ -231,6 +239,12 @@ Keep environment-specific values configurable. Avoid hardcoding hostnames, crede
 ## Testing And Validation
 
 Current validation is mostly manual and smoke-test oriented.
+
+Runtime file preparation regression tests (Python standard library only):
+
+```bash
+python3 -m unittest discover -s scripts/tests
+```
 
 Frontend build:
 
