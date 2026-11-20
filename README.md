@@ -240,12 +240,6 @@ Keep environment-specific values configurable. Avoid hardcoding hostnames, crede
 
 Current validation is mostly manual and smoke-test oriented.
 
-Runtime file preparation regression tests (Python standard library only):
-
-```bash
-python3 -m unittest discover -s scripts/tests
-```
-
 Frontend build:
 
 ```bash

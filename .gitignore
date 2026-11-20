@@ -3,5 +3,3 @@
 example_curl.sh
 elias-search-server/db.sqlite3
 logs/*
-__pycache__/
-*.pyc
