@@ -81,7 +81,6 @@ Docker Compose is the recommended way to run the full stack.
 ```bash
 cp .env.example .env
 # edit .env with your database credentials, service URLs, and mounted data paths
-bash scripts/prepare_runtime_files.sh db.sqlite3 dj_log.log
 docker compose up --build
 ```
 
@@ -90,13 +89,13 @@ The production-style compose file publishes:
 - Frontend: `http://localhost:3000`
 - Backend: `http://localhost:8080`
 
-The preparation command creates missing SQLite and log files without overwriting
-existing files. Django's startup migrations initialize a new, empty SQLite file.
-If either path is a directory or symlink, preparation stops so you can inspect it
-and move it aside deliberately. The file bind mounts disable automatic directory
-creation, so skipping preparation produces a missing-source error.
+Compose stores the Django SQLite database and the DataJoint file log in the
+`elias_state` volume. Django creates the database and its tables when startup
+runs migrations against a new volume. An existing host `db.sqlite3` is not
+imported automatically. Back up the volume if you need to keep the Django
+sessions or admin state, and keep it when replacing containers.
 
-The helper script `./start_service.sh` prepares these files automatically, sources `.env`, builds with Docker BuildKit/SSH forwarding, starts the stack, and follows server logs. Use it when your environment needs SSH access to install private Git dependencies:
+The helper script `./start_service.sh` sources `.env`, builds with Docker BuildKit/SSH forwarding, starts the stack, and follows server logs. Use it when your environment needs SSH access to install private Git dependencies:
 
 ```bash
 ./start_service.sh
@@ -107,7 +106,6 @@ The helper script `./start_service.sh` prepares these files automatically, sourc
 ```bash
 cp .env.example .env.dev
 # edit .env.dev for local development
-bash scripts/prepare_runtime_files.sh dj_log.log
 docker compose -f docker-compose-dev.yml up --build
 ```
 
@@ -117,7 +115,9 @@ The development compose file publishes:
 - Backend: `http://localhost:8081`
 - Optional Nginx reverse proxy: `https://localhost:8444`, if configured with local certificates
 
-The helper script `./start_service_dev.sh` prepares the log file automatically, sources `.env.dev`, builds with Docker BuildKit/SSH forwarding, and starts the development stack:
+Development stores the DataJoint file log in a separate `elias_dev_logs` volume.
+
+The helper script `./start_service_dev.sh` sources `.env.dev`, builds with Docker BuildKit/SSH forwarding, and starts the development stack:
 
 ```bash
 ./start_service_dev.sh
