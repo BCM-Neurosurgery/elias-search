@@ -23,11 +23,12 @@ services:
       DJ_HOST: ${DJ_HOST}
       DJ_PORT: ${DJ_PORT}
       ENVIRONMENT: ${ENVIRONMENT}
+      DJANGO_SQLITE_PATH: /var/lib/elias-search/db.sqlite3
+      LOGGING_PATH: /var/lib/elias-search/dj_log.log
     volumes:
       - ${DATALAKE_PATH}:/mnt/datalake/data/emu:ro
       - ${STITCHED_PATH}:/mnt/stitched/EMU-18112:ro
-      - ./elias-search-server/dj_log.log:/mnt/lake-database/stitched-logs/datajoint_computed_table.log
-      - ./elias-search-server/db.sqlite3:/app/db.sqlite3
+      - elias_state:/var/lib/elias-search
     command: >
       sh -c "python manage.py migrate && daphne -b 0.0.0.0 -p 8080 es_server.asgi:application"
     restart: unless-stopped
@@ -42,6 +43,6 @@ services:
       options:
         max-size: "100m"
         max-file: "3"
-  
 
-
+volumes:
+  elias_state:

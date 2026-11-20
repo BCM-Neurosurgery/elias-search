@@ -89,6 +89,12 @@ The production-style compose file publishes:
 - Frontend: `http://localhost:3000`
 - Backend: `http://localhost:8080`
 
+Compose stores the Django SQLite database and the DataJoint file log in the
+`elias_state` volume. Django creates the database and its tables when startup
+runs migrations against a new volume. An existing host `db.sqlite3` is not
+imported automatically. Back up the volume if you need to keep the Django
+sessions or admin state, and keep it when replacing containers.
+
 The helper script `./start_service.sh` sources `.env`, builds with Docker BuildKit/SSH forwarding, starts the stack, and follows server logs. Use it when your environment needs SSH access to install private Git dependencies:
 
 ```bash
@@ -108,6 +114,8 @@ The development compose file publishes:
 - Frontend: `http://localhost:3001`
 - Backend: `http://localhost:8081`
 - Optional Nginx reverse proxy: `https://localhost:8444`, if configured with local certificates
+
+Development stores the DataJoint file log in a separate `elias_dev_logs` volume.
 
 The helper script `./start_service_dev.sh` sources `.env.dev`, builds with Docker BuildKit/SSH forwarding, and starts the development stack:
 

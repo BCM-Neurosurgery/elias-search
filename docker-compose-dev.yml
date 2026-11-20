@@ -23,10 +23,11 @@ services:
       DJ_HOST: ${DJ_HOST}
       DJ_PORT: ${DJ_PORT}
       ENVIRONMENT: ${ENVIRONMENT}
+      LOGGING_PATH: /var/lib/elias-search/dj_log.log
     volumes:
       - ${DATALAKE_PATH}:/mnt/datalake/data/emu:ro
       - ${STITCHED_PATH}:/mnt/stitched/EMU-18112:ro
-      - ./elias-search-server/dj_log.log:/mnt/lake-database/stitched-logs/datajoint_computed_table.log
+      - elias_dev_logs:/var/lib/elias-search
     command: >
       sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8081"
   nginx:
@@ -53,6 +54,6 @@ services:
       - ./docker-compose-dev.yml:/app/docker-compose.yml
       - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
-  
 
-
+volumes:
+  elias_dev_logs:
